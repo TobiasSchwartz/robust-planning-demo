@@ -112,6 +112,17 @@ class ButtonManager {
                       : UI_CONFIG.COLORS.BUTTON.DISABLED
               );
           }
+          else if (buttonKey === "finalStage") {
+            const isLastStage = state.currentStage === state.totalStages; 
+            button.enabled = isLastStage;
+            button.visible = isLastStage;
+            button.setStyle(
+                "fillBg",
+                isLastStage
+                    ? UI_CONFIG.COLORS.BUTTON.SELECTED
+                    : UI_CONFIG.COLORS.BUTTON.DISABLED
+            );
+        }
       });
     }
 
@@ -158,6 +169,16 @@ class ButtonManager {
       });
     }
   
+    createFinalButton(label,x,y,width,height,onClick){
+      const button = this.createMyButton("finalStage", label, x, y, width, height, onClick);
+    
+    button.visible = false; 
+    button.enabled = false;
+    button.setStyle("fillBg", UI_CONFIG.COLORS.BUTTON.DISABLED);
+    button.setStyle("textSize", 26);
+    
+    return button;
+    }
     setButtonHoverState(button, isHovered) {
         if (button.enabled && button._lastHoverState !== isHovered) {
           button._lastHoverState = isHovered;
@@ -198,5 +219,6 @@ class ButtonManager {
         (button) => button.category === categoryId && button.id !== categoryId
       );
     }
+
   }
   

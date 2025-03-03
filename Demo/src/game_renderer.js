@@ -84,6 +84,19 @@ class GameRenderer {
         UI_CONFIG.BUTTON.EVALUATE.HEIGHT,
         () => this.gameEngine.dispatch("RESET_GAME")
       );
+      const isLastStage = state.currentStage === state.totalStages;
+
+      if (isLastStage) {
+        this.buttonManager.createMyButton(
+            "finalStage",
+            "Mehr Verstehen",
+            layout.x + 220,  
+            layout.y -60,
+            UI_CONFIG.BUTTON.EVALUATE.WIDTH,
+            UI_CONFIG.BUTTON.EVALUATE.HEIGHT,
+            () => window.open("https://github.com/TobiasSchwartz/robust-planning-demo/blob/b075fec6d61dce6c48e37a771c7a681c7327058a/poster_ki-erlebnistag.pdf") 
+        );
+      }
     }
     else if (state.phase === "planning") {
       if (state.selectedCategory) {
