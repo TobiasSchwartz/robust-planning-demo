@@ -10,22 +10,22 @@ Under the Buttons are interactive action, what you have planned for your festiva
 
 By Button"Transport(Carriage)":
 - [x] Zug (train)
-- [x]Auto(car)
-- [x]Fahrgemeinschaft(carpooling)
-- [x]Camping-Bus
-- [x]Helicopter
+- [x] Auto (car)
+- [x] Fahrgemeinschaft(carpooling)
+- [x] Camping-Bus
+- [x] Helicopter
 
 By Button"Unterkunft"(Accommodation)
-- [x]Gruppenzelt(Group tent)
-- [x]2er-Zelt(two tent)
-- [x]Camping Bus
-- [x]Stadt-Hotel(City Hotel)
+- [x] Gruppenzelt(Group tent)
+- [x] 2er-Zelt(two tent)
+- [x] Camping Bus
+- [x] Stadt-Hotel(City Hotel)
 
 By Button"Verpflegung"(Catering services)
-- [x]Campingkocher(Camping cooking)
-- [x]Festival Food
-- [x]Hybrid/Mix
-- [x]Nur Bier(Only bier)
+- [x] Campingkocher(Camping cooking)
+- [x] Festival Food
+- [x] Hybrid/Mix
+- [x] Nur Bier(Only bier)
 
 After pressing the action you get an overrun action, which you did not take into account in your planning
 
