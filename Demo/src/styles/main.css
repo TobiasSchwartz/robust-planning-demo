@@ -1,0 +1,73 @@
+/* Main Animations */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Intro Screen Elements */
+.start-button {
+    position: fixed;
+    left: 50%;
+    bottom: 15%;
+    transform: translateX(-50%);
+    padding: 15px 40px;
+    font-size: 30px;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.start-button:hover {
+    transform: translateX(-50%) scale(1.10);
+    box-shadow: 0 6px 20px rgba(223, 179, 179, 0.25);
+}
+
+.title {
+    position: fixed;
+    width: 100%;
+    top: 20%;
+    text-align: center;
+    color: white;
+    font-size: 60pt;
+    font-family: Arial, sans-serif;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    /* animation: float 3s ease-in-out infinite; */
+}
+
+.subtitle {
+    position: fixed;
+    width: 100%;
+    top: 35%;
+    text-align: center;
+    color: rgb(217, 217, 217);
+    font-size: 30pt;
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+}
+
+/* Game UI Elements */
+canvas { 
+    display: block; 
+    margin: auto;
+}
+
+body { 
+    margin: 0; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh;
+    background: #f1f1f1;
+}
