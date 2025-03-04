@@ -89,7 +89,7 @@ class GameRenderer {
       if (isLastStage) {
         this.buttonManager.createMyButton(
             "finalStage",
-            "Mehr Wissen",
+            "Mehr Verstehen",
             layout.x + 220,  
             layout.y -60,
             UI_CONFIG.BUTTON.EVALUATE.WIDTH,
