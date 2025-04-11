@@ -27,5 +27,6 @@ By Button"Verpflegung"(Catering services)
 - [x] Hybrid/Mix
 - [x] Nur Bier(Only bier)
 
-After pressing the action you get an overrun action, which you did not take into account in your planning
-// hier reinschreiben link zum spiel //
+Then you should press the appropriate action in the appropriate categories. Then press Continue and an unforeseen event will occur that you did not plan for.
+Then comes the scoring and the game is over.
+
