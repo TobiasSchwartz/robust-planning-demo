@@ -1,7 +1,7 @@
 An interactive web-based demo that helps users plan their festival experience by making strategic choices about transportation, accommodation, and food. Watch your decisions affect your festival strategy's robustness score as you prepare for Rock am Ring!
 Developed for the KI-Erlebnistag 2024 in the scope of the week of AI (Woche der KI)
 
-Here is the link to the Browser: ("robust-planning-demo-main\robust-planning-demo-main\index.html")
+Here is the link to the Browser: ("\robust-planning-demo-main\index.html")
 
 What you recognize in game:
 
