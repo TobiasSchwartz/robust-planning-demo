@@ -21,7 +21,15 @@ class GameRenderer {
     const startBtn = document.createElement('button');
     startBtn.className = 'start-button';
     startBtn.textContent = GAME_DATA.INTRO.button_text;
-    startBtn.onclick = () => this.startGame();
+
+    // Handle both mouse and touch events for better compatibility
+    const startHandler = () => this.startGame();
+    startBtn.onclick = startHandler;
+    startBtn.ontouchend = (e) => {
+      e.preventDefault(); // Prevent ghost click
+      startHandler();
+    };
+
     document.body.appendChild(startBtn);
     this.startBtn = startBtn;
 

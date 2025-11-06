@@ -27,6 +27,8 @@
     transition: all 0.3s ease;
     font-family: Arial, sans-serif;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    touch-action: manipulation; /* Improves touch responsiveness */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
 }
 
 .start-button:hover {
