@@ -723,9 +723,11 @@ class GameRenderer {
 
   // Window resize handling
   handleResize() {
-    // Recalculate positions when window is resized
-    this.buttonManager.removeAll();
-    this.createInitialButtons();
-    this.handleStateUpdate(this.gameEngine.state);
+    // Only recalculate button positions if game has started
+    if (this.gameEngine.state.phase !== "intro") {
+      this.buttonManager.removeAll();
+      this.createInitialButtons();
+      this.handleStateUpdate(this.gameEngine.state);
+    }
   }
 }

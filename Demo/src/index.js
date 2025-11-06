@@ -27,12 +27,14 @@ function setup() {
 function draw() {
     // Clear background
     background(UI_CONFIG.COLORS.BACKGROUND);
-    
+
     // Draw game state
     gameRenderer.draw(gameEngine.state);
-    
-    // Draw GUI elements
-    drawGui();
+
+    // Only draw GUI elements after game has started
+    if (gameEngine.state.phase !== "intro") {
+        drawGui();
+    }
 }
 
 // Handle window resizing
