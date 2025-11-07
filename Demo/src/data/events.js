@@ -68,13 +68,20 @@ const EVENT_SYSTEM = {
         }
       },
       survivedOutcomes: {
-        great: {
-          conditions: {
-            accommodation: ["hotel"],
-            transport: ["heli"]
+        great: [
+          {
+            conditions: {
+              accommodation: ["hotel"]
+            },
+            message: "Klimaanlage im Hotel - während andere schwitzen, chillst du in kühler Luft! ❄️"
           },
-          message: "Klimaanlage im Hotel und kühle Helikopterflüge über die schwitzende Masse - das Leben kann so schön sein! ❄️"
-        },
+          {
+            conditions: {
+              transport: ["heli"]
+            },
+            message: "Kühle Helikopterflüge über die schwitzende Masse - pure Erfrischung! 🚁"
+          }
+        ],
         good: {
           conditions: {
             food: ["festivalFood"],
@@ -120,7 +127,7 @@ const EVENT_SYSTEM = {
           conditions: {
             transport: ["heli", "train"]
           },
-          message: "Du schwebst majestätisch über dem Stau hinweg - manchmal zahlt sich Luxus eben aus! 🚁"
+          message: "Kein Stau für dich! Während andere im Verkehr feststecken, kommst du entspannt ans Ziel!"
         },
         good: {
           conditions: {
@@ -189,19 +196,28 @@ const EVENT_SYSTEM = {
         }
       },
       survivedOutcomes: {
-        great: {
-          conditions: {
-            food: ["cooking"],
-            transport: ["car", "camper"]
+        great: [
+          {
+            conditions: {
+              food: ["cooking"]
+            },
+            message: "Deine Camping-Küche wird zum Geheimtipp! Sogar die Security kommt zum Nudeln schnorren! 🍝"
+          }
+        ],
+        good: [
+          {
+            conditions: {
+              food: ["hybrid"]
+            },
+            message: "Gut, dass du auch einen Kocher dabei hast! Backup-Plan erfolgreich aktiviert! 🍳"
           },
-          message: "Deine Camping-Küche wird zum Geheimtipp! Sogar die Security kommt zum Nudeln schnorren! 🍝"
-        },
-        good: {
-          conditions: {
-            accommodation: ["hotel"]
-          },
-          message: "Das Hotel-Restaurant rettet dir den Tag! 🍽️"
-        },
+          {
+            conditions: {
+              accommodation: ["hotel"]
+            },
+            message: "Das Hotel-Restaurant rettet dir den Tag! 🍽️"
+          }
+        ],
         rough: {
           message: "Trocken Brot und Käse aus dem Supermarkt... Naja, Hauptsache satt! 🧀"
         }
@@ -247,13 +263,20 @@ const EVENT_SYSTEM = {
         }
       },
       survivedOutcomes: {
-        great: {
-          conditions: {
-            transport: ["heli"],
-            accommodation: ["hotel"]
+        great: [
+          {
+            conditions: {
+              transport: ["heli"]
+            },
+            message: "Mit dem Helikopter angereist? Du passt perfekt in die VIP-Szene und knüpfst wertvolle Kontakte! 🚁🌟"
           },
-          message: "Mit deinem VIP-Style passt du perfekt rein und knüpfst wertvolle Kontakte für die Zukunft! 🌟"
-        },
+          {
+            conditions: {
+              accommodation: ["hotel"]
+            },
+            message: "Als Hotel-Gast bewegst du dich souverän in gehobenen Kreisen - ein unvergesslicher Abend! 🏨✨"
+          }
+        ],
         good: {
           conditions: {
             food: ["festivalFood", "hybrid"]
@@ -313,29 +336,44 @@ const EVENT_SYSTEM = {
     }
 
     // 2. Check survival quality
-    if (event.survivedOutcomes.great) {
-      const isGreat = Object.entries(event.survivedOutcomes.great.conditions).every(
+    // Helper function to check if conditions match
+    const checkConditions = (conditions) => {
+      return Object.entries(conditions).every(
         ([category, validChoices]) => validChoices.includes(selections[category])
       );
-      if (isGreat) {
-        return {
-          survived: true,
-          quality: 'great',
-          message: event.survivedOutcomes.great.message
-        };
+    };
+
+    // Check 'great' outcomes (support both single object and array of options)
+    if (event.survivedOutcomes.great) {
+      const greatOptions = Array.isArray(event.survivedOutcomes.great)
+        ? event.survivedOutcomes.great
+        : [event.survivedOutcomes.great];
+
+      for (const option of greatOptions) {
+        if (checkConditions(option.conditions)) {
+          return {
+            survived: true,
+            quality: 'great',
+            message: option.message
+          };
+        }
       }
     }
 
+    // Check 'good' outcomes (support both single object and array of options)
     if (event.survivedOutcomes.good) {
-      const isGood = Object.entries(event.survivedOutcomes.good.conditions).every(
-        ([category, validChoices]) => validChoices.includes(selections[category])
-      );
-      if (isGood) {
-        return {
-          survived: true,
-          quality: 'good',
-          message: event.survivedOutcomes.good.message
-        };
+      const goodOptions = Array.isArray(event.survivedOutcomes.good)
+        ? event.survivedOutcomes.good
+        : [event.survivedOutcomes.good];
+
+      for (const option of goodOptions) {
+        if (checkConditions(option.conditions)) {
+          return {
+            survived: true,
+            quality: 'good',
+            message: option.message
+          };
+        }
       }
     }
 

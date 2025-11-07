@@ -95,15 +95,22 @@ class GameRenderer {
       const isLastStage = state.currentStage === state.totalStages;
 
       if (isLastStage) {
-        this.buttonManager.createMyButton(
-            "finalStage",
-            "Mehr Verstehen",
-            layout.x + 220,  
-            layout.y -60,
-            UI_CONFIG.BUTTON.EVALUATE.WIDTH,
-            UI_CONFIG.BUTTON.EVALUATE.HEIGHT,
-            () => window.open("https://github.com/TobiasSchwartz/robust-planning-demo/blob/b075fec6d61dce6c48e37a771c7a681c7327058a/poster_ki-erlebnistag.pdf") 
+        const infoButton = this.buttonManager.createMyButton(
+          "finalStage",
+          "?",
+          layout.x,
+          layout.y,
+          64,
+          64,
+          () => window.open("https://github.com/TobiasSchwartz/robust-planning-demo/blob/b075fec6d61dce6c48e37a771c7a681c7327058a/poster_ki-erlebnistag.pdf")
         );
+
+        if (infoButton) {
+          infoButton.setStyle("rounding", 32);
+          infoButton.setStyle("textSize", 32);
+          infoButton.setStyle("fillBg", "#23304f");
+          infoButton.setStyle("fillLabel", UI_CONFIG.COLORS.TEXT);
+        }
       }
     }
     else if (state.phase === "planning") {
@@ -531,111 +538,265 @@ class GameRenderer {
       // Reset any lingering shadow effects
       p5.drawingContext.shadowBlur = 0;
       p5.drawingContext.shadowColor = 'rgba(0,0,0,0)';
-      
-      const padding = 40;
-      // Two-column layout for result screen
-      const colWidth = (panelWidth - padding * 3) / 2;  // Account for padding
-      const leftX = panelX + padding;
-      const rightX = panelX + panelWidth/2 + padding/2;
-      
-      // Left column: Result and message
-      // Emoji and main result
-      p5.textSize(90);
-      p5.textAlign(p5.CENTER, p5.TOP);
-      p5.text(
-        state.eventResult.survived ? "🎉" : "😢",
-        leftX + colWidth/2,
-        panelY + padding
-      );
-      
-      const resultColor = this.getResultColor(state);
-      p5.fill(resultColor);
-      p5.textSize(50);
-      p5.text(
-        state.eventResult.survived ? "Festival überlebt!" : "Festival vorbei!",
-        leftX + colWidth/2,
-        panelY + padding + 120
-      );
-      
-      // Event result message
-      p5.fill(UI_CONFIG.COLORS.TEXT);
-      p5.textSize(30);
+
+      const headingFont = "Arial";
+      const bodyFont = "Helvetica Neue";
+      const cardRadius = 24;
+      const surfacePadding = 36;
+      const cardGap = 28;
+      const cardPadding = 24;
+
+      const contentX = panelX + surfacePadding;
+      const contentY = panelY + surfacePadding;
+      const contentWidth = panelWidth - surfacePadding * 2;
+      const contentHeight = panelHeight - surfacePadding * 2;
+
+      const outcomeHeight = Math.max(210, Math.min(contentHeight * 0.45, 260));
+
+      const cardBg = p5.color(18, 32, 65);
+      cardBg.setAlpha(235);
+
+      const accent = this.getResultColor(state);
+      const textPrimary = p5.color(UI_CONFIG.COLORS.TEXT);
+      const textMuted = p5.color(UI_CONFIG.COLORS.TEXT_SECONDARY);
+
+      // Outcome card
+      p5.fill(cardBg);
+      p5.noStroke();
+      p5.rect(contentX, contentY, contentWidth, outcomeHeight, cardRadius);
+
+      const emoji = state.eventResult.survived ? "🎉" : "⚠️";
+      const statusHeadline = state.eventResult.survived ? "Festival gemeistert!" : "Festival gescheitert";
+
       p5.textAlign(p5.LEFT, p5.TOP);
-      p5.textLeading(48);
+      p5.textFont(headingFont);
+      p5.textSize(64);
+      p5.fill(textPrimary);
+      p5.text(emoji, contentX + cardPadding, contentY + cardPadding - 6);
+
+      p5.textSize(34);
+      p5.fill(accent);
+      p5.text(statusHeadline, contentX + cardPadding + 80, contentY + cardPadding);
+
+      p5.textFont(bodyFont);
+      p5.fill(textMuted);
+      p5.textSize(22);
+      p5.text(state.event.name, contentX + cardPadding + 80, contentY + cardPadding + 46);
+
+      p5.fill(textPrimary);
+      p5.textSize(20);
+      p5.textLeading(28);
       p5.text(
         state.eventResult.message,
-        leftX,
-        panelY + padding + 240,
-        colWidth
+        contentX + cardPadding,
+        contentY + cardPadding + 100,
+        contentWidth - cardPadding * 2,
+        outcomeHeight - cardPadding * 1.6
       );
 
-      // Right column: Choices summary
+      // Column layout
+      const columnsTop = contentY + outcomeHeight + cardGap;
+      const availableHeight = contentHeight - (outcomeHeight + cardGap) - cardPadding;
+      const columnHeight = Math.max(230, availableHeight);
+      const columnWidth = (contentWidth - cardGap) / 2;
+
+      const leftX = contentX;
+      const rightX = contentX + columnWidth + cardGap;
+
+      // Left column: robustness insights
+      p5.fill(cardBg);
+      p5.rect(leftX, columnsTop, columnWidth, columnHeight, cardRadius);
+
+      const leftInnerX = leftX + cardPadding;
+
+      p5.textFont(headingFont);
+      p5.textSize(26);
+      p5.fill(textPrimary);
+      const robustHeaderY = columnsTop + cardPadding;
+      p5.text("Robustheits-Check", leftInnerX, robustHeaderY);
+
+      // Robustness gauge with text beside it
+      const gaugeRadius = 55;
+      const gaugeCenterX = leftInnerX + gaugeRadius;
+      const gaugeCenterY = robustHeaderY + 80 + gaugeRadius;
+
+      p5.noFill();
+      p5.strokeWeight(12);
+      const trackColor = p5.color(255, 255, 255, 35);
+      p5.stroke(trackColor);
+      p5.arc(gaugeCenterX, gaugeCenterY, gaugeRadius * 2, gaugeRadius * 2, -p5.HALF_PI, p5.HALF_PI * 3);
+
+      const robustnessScoreRaw = state.eventResult?.robustnessScore ?? state.robustness ?? 0;
+      const robustnessScore = Math.max(0, Math.min(10, robustnessScoreRaw));
+      const robustnessColor = this.getRobustnessColor(robustnessScore);
+      const sweep = (robustnessScore / 10) * p5.TWO_PI;
+      p5.stroke(robustnessColor);
+      p5.arc(
+        gaugeCenterX,
+        gaugeCenterY,
+        gaugeRadius * 2,
+        gaugeRadius * 2,
+        -p5.HALF_PI,
+        -p5.HALF_PI + sweep
+      );
+
+      p5.noStroke();
+      p5.textAlign(p5.CENTER, p5.CENTER);
+      p5.textFont(headingFont);
+      p5.fill(textPrimary);
       p5.textSize(30);
-      p5.fill(UI_CONFIG.COLORS.HIGHLIGHT);
+      p5.text(`${robustnessScore}/10`, gaugeCenterX, gaugeCenterY - 2);
+
+      p5.textFont(bodyFont);
+      p5.textSize(14);
+      p5.fill(textMuted);
+      p5.text("Robustheit", gaugeCenterX, gaugeCenterY + 22);
+
+      const gaugeInfoX = gaugeCenterX + gaugeRadius + 28;
+      const gaugeInfoWidth = columnWidth - (gaugeInfoX - leftInnerX) - cardPadding;
+
+      p5.textAlign(p5.LEFT, p5.TOP);
+      p5.textFont(headingFont);
+      p5.textSize(18);
+      p5.fill(textPrimary);
       p5.text(
-        "Deine Festival-Planung:",
-        rightX,
-        panelY + padding
+        "Durchschnittliche Widerstandskraft",
+        gaugeInfoX,
+        gaugeCenterY - 32,
+        gaugeInfoWidth
       );
 
-      // Show all choices
-      p5.textSize(24);
-      p5.fill(UI_CONFIG.COLORS.TEXT);
-      let yPos = panelY + padding + 60;
-
-      Object.entries(state.selections).forEach(([category, choiceId]) => {
-        const categoryInfo = GAME_DATA.CATEGORIES.find(c => c.id === category);
-        const choice = GAME_DATA.OPTIONS[category][choiceId];
-        
-        p5.text(
-          `${categoryInfo.icon} ${categoryInfo.name}:`,
-          rightX,
-          yPos
-        );
-        p5.text(
-          `${choice.icon} ${choice.name} (${choice.cost}€)`,
-          rightX + 30,
-          yPos + 40
-        );
-        yPos += 100;
-      });
-
-      // Total cost
-      const totalCost = Object.entries(state.selections)
-        .reduce((sum, [category, choiceId]) => 
-          sum + GAME_DATA.OPTIONS[category][choiceId].cost, 0);
-
-      p5.textSize(30);
-      p5.fill(UI_CONFIG.COLORS.HIGHLIGHT);
+      p5.textFont(bodyFont);
+      p5.textSize(15);
+      p5.fill(textMuted);
       p5.text(
-        `Gesamtkosten: ${totalCost}€`,
-        rightX,
-        yPos + 20
+        "Je höher, desto mehr Zufalls-Events hält deine Planung aus.",
+        gaugeInfoX,
+        gaugeCenterY - 2,
+        gaugeInfoWidth
       );
 
-      // Quality indicator
-      if (state.eventResult.survived) {
-        p5.fill(resultColor);
-        p5.textSize(32);
-        p5.textAlign(p5.CENTER, p5.CENTER);
-        const qualityText = {
-          'great': '⭐⭐⭐ Perfekt gemeistert!',
-          'good': '⭐⭐ Gut gemacht!',
-          'rough': '⭐ Knapp geschafft!'
-        }[state.eventResult.quality];
-        
-        p5.text(
-          qualityText,
-          panelX + panelWidth/2,
-          panelY + panelHeight - padding - 90
-        );
+      // Right column: plan overview
+      p5.fill(cardBg);
+      p5.rect(rightX, columnsTop, columnWidth, columnHeight, cardRadius);
+
+      const rightInnerX = rightX + cardPadding;
+      let rightCursor = columnsTop + cardPadding;
+
+      p5.textFont(headingFont);
+      p5.textSize(26);
+      p5.fill(textPrimary);
+      p5.text("Deine Auswahl", rightInnerX, rightCursor);
+      rightCursor += 38;
+
+      const selectionEntries = GAME_DATA.CATEGORIES
+        .map(category => {
+          const choiceId = state.selections[category.id];
+          const option = choiceId ? GAME_DATA.OPTIONS[category.id]?.[choiceId] : null;
+          return option ? { category, option } : null;
+        })
+        .filter(Boolean);
+
+      const listTop = rightCursor;
+      const tileGap = 16;
+      const gridWidth = columnWidth - cardPadding * 2;
+
+      if (selectionEntries.length === 0) {
+        p5.textFont(bodyFont);
+        p5.textSize(16);
+        p5.fill(textMuted);
+        p5.text("Keine Auswahl getroffen.", rightInnerX, listTop);
+        rightCursor = listTop + 24;
+      } else {
+        const columnsCount = Math.min(3, Math.max(1, selectionEntries.length));
+        const tileWidth = (gridWidth - tileGap * (columnsCount - 1)) / columnsCount;
+        const tileHeight = 78;
+
+        selectionEntries.forEach((entry, index) => {
+          const row = Math.floor(index / columnsCount);
+          const col = index % columnsCount;
+          const tileX = rightInnerX + col * (tileWidth + tileGap);
+          const tileY = listTop + row * (tileHeight + tileGap);
+
+          p5.fill(255, 255, 255, 18);
+          p5.rect(tileX, tileY, tileWidth, tileHeight, 12);
+
+          p5.textAlign(p5.LEFT, p5.TOP);
+          p5.textFont(bodyFont);
+          p5.textSize(11);
+          p5.fill(textMuted);
+          p5.text(entry.category.name.toUpperCase(), tileX + 10, tileY + 8);
+
+          p5.textFont(headingFont);
+          p5.textSize(16);
+          p5.fill(textPrimary);
+          p5.text(entry.option.name, tileX + 10, tileY + 26, tileWidth - 20);
+
+          p5.textAlign(p5.LEFT, p5.BOTTOM);
+          p5.textFont(bodyFont);
+          p5.textSize(13);
+          p5.fill(textMuted);
+          p5.text(`${entry.option.cost}€`, tileX + 10, tileY + tileHeight - 10);
+        });
+
+        const rows = Math.ceil(selectionEntries.length / columnsCount);
+        rightCursor = listTop + rows * tileHeight + Math.max(0, rows - 1) * tileGap;
+      }
+      rightCursor += tileGap * 2;
+
+      const totalCost = Object.entries(state.selections).reduce((sum, [category, choiceId]) => {
+        const option = GAME_DATA.OPTIONS[category]?.[choiceId];
+        return option ? sum + option.cost : sum;
+      }, 0);
+
+      p5.textFont(headingFont);
+      p5.textSize(18);
+      p5.fill(accent);
+      p5.text(`Gesamtkosten: ${totalCost}€`, rightInnerX, rightCursor);
+      rightCursor += 22;
+
+      // Event recap is already present in the hero card, so we keep the summary focused here.
+
+      // Buttons
+      const resetButton = this.buttonManager.getButton("reset");
+      const finalButton = this.buttonManager.getButton("finalStage");
+      const buttonY = this.p5.height - UI_CONFIG.BUTTON.EVALUATE.HEIGHT - 50;
+
+      if (resetButton) {
+        resetButton.y = buttonY;
+        resetButton.x = (this.p5.width - UI_CONFIG.BUTTON.EVALUATE.WIDTH) / 2;
       }
 
-      // Restart button
-      const button = this.buttonManager.getButton("reset");
-      if (button) {
-        button.y = panelY + panelHeight - padding - 40;
-        button.x = panelX + (panelWidth - UI_CONFIG.BUTTON.EVALUATE.WIDTH) / 2;
+      if (finalButton) {
+        const infoMargin = 24;
+        finalButton.x = UI_CONFIG.LAYOUT.MAIN_PANEL.X + UI_CONFIG.LAYOUT.MAIN_PANEL.WIDTH - finalButton.width - infoMargin;
+        finalButton.y = UI_CONFIG.LAYOUT.MAIN_PANEL.Y + UI_CONFIG.LAYOUT.MAIN_PANEL.HEIGHT - finalButton.height - infoMargin;
+
+        const mouseOverInfo =
+          this.p5.mouseX >= finalButton.x &&
+          this.p5.mouseX <= finalButton.x + finalButton.width &&
+          this.p5.mouseY >= finalButton.y &&
+          this.p5.mouseY <= finalButton.y + finalButton.height;
+
+        if (mouseOverInfo) {
+          const tooltipText = "Du willst mehr verstehen?";
+          const tooltipPadding = 10;
+          this.p5.textFont(bodyFont);
+          this.p5.textSize(14);
+          const tooltipWidth = this.p5.textWidth(tooltipText) + tooltipPadding * 2;
+          const tooltipHeight = 28;
+        const tooltipX = finalButton.x - tooltipWidth - 12;
+        const tooltipY = finalButton.y + finalButton.height / 2 - tooltipHeight / 2;
+
+          this.p5.fill(18, 32, 65, 230);
+          this.p5.noStroke();
+          this.p5.rect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 10);
+
+          this.p5.fill(UI_CONFIG.COLORS.TEXT);
+          this.p5.textAlign(this.p5.LEFT, this.p5.CENTER);
+          this.p5.text(tooltipText, tooltipX + tooltipPadding, tooltipY + tooltipHeight / 2);
+          this.p5.textAlign(this.p5.LEFT, this.p5.TOP);
+        }
       }
     }
 

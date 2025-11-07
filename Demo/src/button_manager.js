@@ -112,16 +112,19 @@ class ButtonManager {
                       : UI_CONFIG.COLORS.BUTTON.DISABLED
               );
           }
-          else if (buttonKey === "finalStage") {
+      else if (buttonKey === "finalStage") {
             const isLastStage = state.currentStage === state.totalStages; 
             button.enabled = isLastStage;
             button.visible = isLastStage;
             button.setStyle(
                 "fillBg",
                 isLastStage
-                    ? UI_CONFIG.COLORS.BUTTON.SELECTED
+                    ? "#23304f"
                     : UI_CONFIG.COLORS.BUTTON.DISABLED
             );
+            button.setStyle("fillLabel", UI_CONFIG.COLORS.TEXT);
+            button.setStyle("textSize", 32);
+            button.setStyle("rounding", 32);
         }
       });
     }
@@ -182,11 +185,16 @@ class ButtonManager {
     setButtonHoverState(button, isHovered) {
         if (button.enabled && button._lastHoverState !== isHovered) {
           button._lastHoverState = isHovered;
-          const color = isHovered 
-            ? UI_CONFIG.COLORS.BUTTON.HOVER 
-            : (button.selected 
-              ? UI_CONFIG.COLORS.BUTTON.SELECTED 
-              : UI_CONFIG.COLORS.BUTTON.DEFAULT);
+          let color;
+          if (button.id === "finalStage") {
+            color = isHovered ? UI_CONFIG.COLORS.BUTTON.HOVER : "#23304f";
+          } else {
+            color = isHovered 
+              ? UI_CONFIG.COLORS.BUTTON.HOVER 
+              : (button.selected 
+                ? UI_CONFIG.COLORS.BUTTON.SELECTED 
+                : UI_CONFIG.COLORS.BUTTON.DEFAULT);
+          }
               
           button.setStyle("fillBg", color);
         }

@@ -94,7 +94,7 @@ const GAME_DATA = {
         description: "Klein, schnell, effektiv. 2 Min Aufbauzeit. Überall zu finden wie Mücken! 🦟",
         pro: ["Schnell", "Flexibel", "Ersetzbar"],
         con: ["Eng", "Getrennt", "Mehr Gewicht"],
-        cost: 200
+        cost: 120
       },
       camperAcc: {
         name: "Camping-Bus",
@@ -154,6 +154,30 @@ const GAME_DATA = {
       }
     }
   },
+
+  COMBINATION_RULES: [
+    // Bonus for all-in camper strategy
+    {
+      categories: ["transport", "accommodation"],
+      condition: ["camper", "camperAcc"],
+      bonus: 2,
+      description: "All-in Camper-Strategie"
+    },
+    // Bonus for flexible hybrid approach
+    {
+      categories: ["food"],
+      condition: ["hybrid"],
+      bonus: 1,
+      description: "Flexibler Backup-Plan"
+    },
+    // Penalty for risky beer-only choice
+    {
+      categories: ["food"],
+      condition: ["beerOnly"],
+      bonus: -2,
+      description: "Hochriskante Ernährung"
+    }
+  ],
 
   DEPENDENCIES: {
     // Disabled combinations based on selections

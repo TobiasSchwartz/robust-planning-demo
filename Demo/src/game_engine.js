@@ -134,7 +134,11 @@ class GameEngine {
     // Auswertung durchführen
     const result = EVENT_SYSTEM.evaluateEvent(this.state.event, this.state.selections);
     this.state.eventResult = result;
-    
+
+    // Calculate robustness score and what-if scenarios
+    this.state.robustness = this.calculateRobustness();
+    this.state.whatIfScenarios = this.calculateWhatIfScenarios();
+
     // Phase auf "result" setzen
     this.state.phase = "result";
 
@@ -190,6 +194,36 @@ class GameEngine {
     });
 
     return modifier;
+  }
+
+  calculateWhatIfScenarios() {
+    const scenarios = {
+      survived: 0,
+      failed: 0,
+      byQuality: { great: 0, good: 0, rough: 0 },
+      failedEvents: []
+    };
+
+    // Test current selections against all possible events
+    EVENT_SYSTEM.events.forEach(event => {
+      const result = EVENT_SYSTEM.evaluateEvent(event, this.state.selections);
+
+      if (result.survived) {
+        scenarios.survived++;
+        scenarios.byQuality[result.quality]++;
+      } else {
+        scenarios.failed++;
+        scenarios.failedEvents.push({
+          name: event.name,
+          message: result.message
+        });
+      }
+    });
+
+    scenarios.total = EVENT_SYSTEM.events.length;
+    scenarios.survivalRate = Math.round((scenarios.survived / scenarios.total) * 100);
+
+    return scenarios;
   }
 
   // Utility methods
