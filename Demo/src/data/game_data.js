@@ -185,21 +185,28 @@ const GAME_DATA = {
       "transport.train": {
         disables: [
           "accommodation.groupTent",
-          "accommodation.camperAcc",
+          "accommodation.camperAcc"
         ],
         reason: "Mit dem Zug kannst du nicht so viel Equipment transportieren!"
       },
       "transport.carpool": {
         disables: [
-          "accommodation.camperAcc",
           "accommodation.groupTent",
+          "accommodation.camperAcc",
           "food.cooking"
         ],
         reason: "In einer Fahrgemeinschaft ist kein Platz für viel Gepäck!"
       },
+      "transport.car": {
+        disables: [
+          "accommodation.camperAcc"
+        ],
+        reason: "Mit einem normalen Auto kannst du nicht im Camping-Bus schlafen!"
+      },
       "accommodation.hotel": {
         disables: [
-          "food.cooking"
+          "food.cooking",
+          "food.hybrid"
         ],
         reason: "Im Hotel kannst du nicht selbst kochen!"
       },
@@ -207,23 +214,26 @@ const GAME_DATA = {
         disables: [
           "accommodation.groupTent",
           "accommodation.camperAcc",
-          "food.cooking"
+          "food.cooking",
+          "food.hybrid"
         ],
-        reason: "Im Helikopter ist der Platz für Gepäck sehr begrenzt!"
+        reason: "Im Helikopter ist der Platz für Gepäck sehr begrenzt - und Gasflaschen sind verboten!"
       },
       "transport.camper": {
         disables: [
           "accommodation.hotel",
+          "accommodation.smallTents",
+          "accommodation.groupTent"
         ],
-        reason: "Mit dem Camping-Bus darfst du nicht in die Stadt fahren."
+        reason: "Wer mit dem Camping-Bus anreist, schläft auch darin!"
       },
       "accommodation.groupTent": {
         disables: [
           "transport.heli",
           "transport.train",
-          "transport.car"
+          "transport.carpool"
         ],
-        reason: "Das Gruppenzelt braucht viel Platz!"
+        reason: "Das Gruppenzelt braucht viel Platz - du brauchst einen eigenen Wagen!"
       },
       "food.cooking": {
         disables: [
@@ -231,15 +241,6 @@ const GAME_DATA = {
         ],
         reason: "Im Hotel kannst du nicht selbst kochen!"
       },
-      "accommodation.camperAcc": {
-        disables: [
-          "transport.train",
-          "transport.carpool",
-          "transport.heli",
-          "transport.car"
-        ],
-        reason: "Wer im Camper schlafen will, muss auch damit anreisen!"
-      }
     }
   }
 };
