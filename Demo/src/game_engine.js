@@ -32,7 +32,13 @@ class GameEngine {
         this.handleOptionSelection(payload.category, payload.optionId);
         break;
       case "START_EVALUATION":
-        this.startEvaluation();
+        this.showSummary();
+        break;
+      case "BACK_TO_PLANNING":
+        this.backToPlanning();
+        break;
+      case "CONTINUE_TO_EVENT":
+        this.startEvent();
         break;
       case "SHOW_EVENT_RESULT":
         this.showEventResult();
@@ -107,16 +113,31 @@ class GameEngine {
     }
   }
 
-  // Startet die Auswertung und zeigt das zufällige Event
-  startEvaluation() {
+  // Zeigt die Zusammenfassung vor dem Event
+  showSummary() {
     if (!this.isSelectionComplete()) {
-      console.log("Cannot start evaluation - selection not complete");
+      console.log("Cannot show summary - selection not complete");
       return;
     }
 
+    // Calculate robustness score for preview
+    this.state.robustness = this.calculateRobustness();
+
+    // Phase auf "summary" setzen
+    this.state.phase = "summary";
+  }
+
+  // Zurück zur Planungsphase
+  backToPlanning() {
+    this.state.phase = "planning";
+    // Keep selections, robustness, etc. - just go back to planning
+  }
+
+  // Startet das zufällige Event
+  startEvent() {
     // Phase auf "event" setzen
     this.state.phase = "event";
-    
+
     // Zufälliges Event auswählen
     const event = EVENT_SYSTEM.getRandomEvent();
     this.state.event = event;

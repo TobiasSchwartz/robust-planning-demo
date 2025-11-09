@@ -200,10 +200,27 @@ class ButtonManager {
         }
       }
   
+    removeFromGui(button) {
+      // Remove button from p5.touchgui's global registry
+      if (this.gui && this.gui.objects) {
+        const index = this.gui.objects.indexOf(button);
+        if (index > -1) {
+          this.gui.objects.splice(index, 1);
+
+          // Reindex remaining objects
+          for (let i = index; i < this.gui.objects.length; i++) {
+            this.gui.objects[i]._index = i;
+          }
+        }
+      }
+    }
+
     removeAll() {
       this.buttons.forEach((button) => {
         button.visible = false;
         button.enabled = false;
+        // Actually remove from p5.touchgui registry
+        this.removeFromGui(button);
       });
       this.buttons.clear();
     }

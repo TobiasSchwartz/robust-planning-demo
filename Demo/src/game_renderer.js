@@ -11,6 +11,7 @@ class GameRenderer {
     this.continueButton = null; // continue after event result
 
     this.eventStartTime = 0;
+    this._lastPhase = null; // Track last phase for proper button management
 
     // Subscribe to game state changes
     this.gameEngine.subscribe((state) => this.handleStateUpdate(state));
@@ -61,8 +62,37 @@ class GameRenderer {
   }
 
   handleStateUpdate(state) {
-    // When entering event or result phase, clear all buttons
-    if (state.phase === "event") {
+    // When entering summary, event or result phase, clear all buttons
+    if (state.phase === "summary") {
+      this.buttonManager.removeAll();
+
+      const layout = getLayout.evaluateButton();
+      const buttonGap = 20;
+      const backButtonWidth = 200;
+
+      // Add "Zurück" button (left side)
+      this.buttonManager.createMyButton(
+        "backToPlanning",
+        "← Zurück",
+        layout.x - backButtonWidth - buttonGap,
+        layout.y,
+        backButtonWidth,
+        UI_CONFIG.BUTTON.EVALUATE.HEIGHT,
+        () => this.gameEngine.dispatch("BACK_TO_PLANNING")
+      );
+
+      // Add "Zum Festival" button (right side)
+      this.buttonManager.createMyButton(
+        "continueToEvent",
+        "Zum Festival! →",
+        layout.x + UI_CONFIG.BUTTON.EVALUATE.WIDTH + buttonGap,
+        layout.y,
+        UI_CONFIG.BUTTON.EVALUATE.WIDTH,
+        UI_CONFIG.BUTTON.EVALUATE.HEIGHT,
+        () => this.gameEngine.dispatch("CONTINUE_TO_EVENT")
+      );
+    }
+    else if (state.phase === "event") {
       this.buttonManager.removeAll();
 
       // Add only the continue button
@@ -76,7 +106,7 @@ class GameRenderer {
         UI_CONFIG.BUTTON.EVALUATE.HEIGHT,
         () => this.gameEngine.dispatch("SHOW_EVENT_RESULT")
       );
-    } 
+    }
     else if (state.phase === "result") {
       // Clear continue button
       this.buttonManager.removeAll();
@@ -114,24 +144,30 @@ class GameRenderer {
       }
     }
     else if (state.phase === "planning") {
+      // If returning to planning from another phase, recreate buttons
+      if (this._lastPhase && this._lastPhase !== "planning") {
+        this.buttonManager.removeAll();
+        this.createInitialButtons();
+      }
+
       if (state.selectedCategory) {
           // Category is selected, show options
           const categoryOptions = this.options[state.selectedCategory];
-          
+
           // Find the category index for layout calculations
           const categoryIndex = this.categories.findIndex(
             (cat) => cat.id === state.selectedCategory
           );
-    
+
           if (categoryIndex !== -1) {
             // Get the layout helper for this category
             const layout = getLayout.optionButtons(categoryIndex);
-    
+
             // Create option buttons for selected category
             Object.entries(categoryOptions).forEach(([id, option], optionIndex) => {
               // Get exact position for this option button
               const position = layout.getPosition(optionIndex);
-              
+
               this.buttonManager.createOptionButton(
                 state.selectedCategory,
                 id,
@@ -153,6 +189,9 @@ class GameRenderer {
         this.buttonManager.hideAllOptionButtons();
       }
     }
+
+    // Track current phase for next update
+    this._lastPhase = state.phase;
 
     // Update all button states
     this.buttonManager.updateButtonStates(state);
@@ -214,17 +253,21 @@ class GameRenderer {
         case "intro":
             this.drawIntro();
             break;
-            
+
         case "planning":
             this.drawPanelBackground();
             this.drawInfoPanel(state);
             this.drawMainPanel(state);
             break;
-            
+
+        case "summary":
+            this.drawSummaryPhase(state);
+            break;
+
         case "event":
             this.drawEventPanel(state);
             break;
-            
+
         case "result":
             this.drawEventPanel(state);
             break;
@@ -798,6 +841,332 @@ class GameRenderer {
           this.p5.textAlign(this.p5.LEFT, this.p5.TOP);
         }
       }
+    }
+
+    p5.pop();
+  }
+
+  drawSummaryPhase(state) {
+    const p5 = this.p5;
+
+    // Full screen overlay similar to result phase
+    const panelWidth = p5.width * 0.82;
+    const panelHeight = p5.height * 0.82;
+    const panelX = (p5.width - panelWidth) / 2;
+    const panelY = (p5.height - panelHeight) / 2;
+
+    // Draw semi-transparent overlay
+    p5.push();
+    const overlayColor = p5.color(18, 32, 65);
+    overlayColor.setAlpha(240);
+    p5.fill(overlayColor);
+    p5.noStroke();
+    p5.rect(panelX, panelY, panelWidth, panelHeight, 24);
+
+    // Constants
+    const headingFont = "Arial";
+    const bodyFont = "Helvetica Neue";
+    const cardRadius = 24;
+    const surfacePadding = 36;
+    const cardGap = 28;
+    const cardPadding = 24;
+
+    const contentX = panelX + surfacePadding;
+    const contentY = panelY + surfacePadding;
+    const contentWidth = panelWidth - surfacePadding * 2;
+    const contentHeight = panelHeight - surfacePadding * 2;
+
+    const cardBg = p5.color(18, 32, 65);
+    cardBg.setAlpha(235);
+
+    const textPrimary = p5.color(UI_CONFIG.COLORS.TEXT);
+    const textMuted = p5.color(UI_CONFIG.COLORS.TEXT_SECONDARY);
+    const highlightColor = p5.color(UI_CONFIG.COLORS.HIGHLIGHT);
+    const errorColor = p5.color(UI_CONFIG.COLORS.ERROR);
+
+    const selectionEntries = GAME_DATA.CATEGORIES
+      .map(category => {
+        const choiceId = state.selections[category.id];
+        const option = choiceId ? GAME_DATA.OPTIONS[category.id]?.[choiceId] : null;
+        return option ? { category, option } : null;
+      })
+      .filter(Boolean);
+
+    const robustnessScore = Math.max(0, Math.min(10, state.robustness || 0));
+    const robustnessColor = this.getRobustnessColor(robustnessScore);
+
+    const clampText = (text = "", maxChars = 110) => {
+      if (!text) return "";
+      return text.length > maxChars ? `${text.slice(0, maxChars - 1)}…` : text;
+    };
+
+    // Top instruction banner
+    const instructionsHeight = 90;
+    const instructionsX = contentX;
+    const instructionsY = contentY;
+    p5.textAlign(p5.LEFT, p5.TOP);
+    p5.textFont(headingFont);
+    p5.textSize(34);
+    p5.fill(highlightColor);
+    p5.text("Letzter Check vor dem Festival", instructionsX, instructionsY);
+
+    p5.textFont(bodyFont);
+    p5.textSize(18);
+    p5.fill(textMuted);
+    p5.text(
+      "Überprüfe deine Auswahl noch einmal in Ruhe – du kannst jederzeit zurück oder direkt starten.",
+      instructionsX,
+      instructionsY + 42,
+      contentWidth - cardPadding
+    );
+
+    // Main area split into two columns like the final overview
+    const columnsTop = contentY + instructionsHeight;
+    const columnsHeight = contentHeight - instructionsHeight;
+    const leftWidth = (contentWidth - cardGap) * 0.62;
+    const rightWidth = contentWidth - leftWidth - cardGap;
+
+    // LEFT: Selection grid
+    p5.fill(cardBg);
+    p5.rect(contentX, columnsTop, leftWidth, columnsHeight, cardRadius);
+
+    const leftInnerX = contentX + cardPadding;
+    const leftInnerY = columnsTop + cardPadding;
+    const gridWidth = leftWidth - cardPadding * 2;
+
+    p5.textFont(headingFont);
+    p5.textSize(26);
+    p5.fill(textPrimary);
+    p5.text("Auswahl-Check", leftInnerX, leftInnerY);
+
+    const gridStartY = leftInnerY + 38;
+    const tileGap = 18;
+    const gridColumns = Math.min(3, Math.max(1, selectionEntries.length || 1));
+    const tileWidth = (gridWidth - tileGap * (gridColumns - 1)) / gridColumns;
+    const tileHeight = 226;
+    const tilePadding = 16;
+
+    selectionEntries.forEach((entry, index) => {
+      const row = Math.floor(index / gridColumns);
+      const col = index % gridColumns;
+      const tileX = leftInnerX + col * (tileWidth + tileGap);
+      const tileY = gridStartY + row * (tileHeight + tileGap);
+
+      p5.fill(255, 255, 255, 18);
+      p5.rect(tileX, tileY, tileWidth, tileHeight, 16);
+
+      p5.textAlign(p5.LEFT, p5.TOP);
+      p5.textFont(bodyFont);
+      p5.textSize(12);
+      p5.fill(textMuted);
+      p5.text(entry.category.name.toUpperCase(), tileX + tilePadding, tileY + tilePadding);
+
+      p5.textFont(headingFont);
+      p5.textSize(20);
+      p5.fill(textPrimary);
+      p5.text(
+        `${entry.option.icon || ""} ${entry.option.name}`,
+        tileX + tilePadding,
+        tileY + tilePadding + 18,
+        tileWidth - tilePadding * 2
+      );
+
+      p5.textFont(bodyFont);
+      p5.textSize(18);
+      p5.fill(highlightColor);
+      p5.text(
+        `${entry.option.cost}€`,
+        tileX + tilePadding,
+        tileY + tilePadding + 58
+      );
+
+      // Subtle divider between header and notes
+      const dividerY = tileY + tilePadding + 90;
+      p5.stroke(255, 255, 255, 30);
+      p5.strokeWeight(1);
+      p5.line(tileX + tilePadding, dividerY, tileX + tileWidth - tilePadding, dividerY);
+      p5.noStroke();
+
+      const proPoints = (entry.option.pro || []).slice(0, 2).map(point => clampText(point, 55));
+      const conPoints = (entry.option.con || []).slice(0, 2).map(point => clampText(point, 55));
+
+      let textCursor = dividerY + 16;
+
+      if (proPoints.length > 0) {
+        p5.textFont(bodyFont);
+        p5.textSize(13);
+        p5.fill("#52E08C");
+        proPoints.forEach(point => {
+          p5.text(`+ ${point}`, tileX + tilePadding, textCursor, tileWidth - tilePadding * 2);
+          textCursor += 18;
+        });
+      }
+
+      if (conPoints.length > 0) {
+        if (proPoints.length > 0) {
+          textCursor += 6;
+        }
+        p5.fill(errorColor);
+        conPoints.forEach(point => {
+          p5.text(`− ${point}`, tileX + tilePadding, textCursor, tileWidth - tilePadding * 2);
+          textCursor += 18;
+        });
+      }
+    });
+
+    if (selectionEntries.length === 0) {
+      p5.textAlign(p5.LEFT, p5.TOP);
+      p5.textFont(bodyFont);
+      p5.textSize(18);
+      p5.fill(textMuted);
+      p5.text(
+        "Noch keine Auswahl getroffen.",
+        leftInnerX,
+        gridStartY
+      );
+    }
+
+    const rows = Math.max(1, Math.ceil((selectionEntries.length || 1) / gridColumns));
+    const totalY = gridStartY + rows * tileHeight + (rows - 1) * tileGap + 20;
+
+    p5.textAlign(p5.CENTER, p5.TOP);
+    p5.textFont(headingFont);
+    p5.textSize(24);
+    p5.fill(highlightColor);
+    p5.text(
+      `Gesamtkosten: ${state.spent}€`,
+      leftInnerX + gridWidth / 2,
+      totalY
+    );
+    p5.textAlign(p5.LEFT, p5.TOP);
+
+    // RIGHT: Checklist & robustness blocks
+    const rightX = contentX + leftWidth + cardGap;
+    p5.fill(cardBg);
+    p5.rect(rightX, columnsTop, rightWidth, columnsHeight, cardRadius);
+
+    const rightInnerX = rightX + cardPadding;
+    const rightInnerWidth = rightWidth - cardPadding * 2;
+    let rightCursor = columnsTop + cardPadding;
+
+    p5.textAlign(p5.LEFT, p5.TOP);
+    p5.textFont(headingFont);
+    p5.textSize(30);
+    p5.fill(textPrimary);
+    p5.text("⚠️ Was könnte passieren?", rightInnerX, rightCursor);
+    rightCursor += 44;
+
+    const risks = [
+      "Schlechtes Wetter",
+      "Technische Probleme",
+      "Gesundheitliche Notfälle",
+      "Logistische Überraschungen"
+    ];
+
+    p5.textFont(bodyFont);
+    p5.textSize(16);
+    p5.fill(textMuted);
+    p5.textLeading(28);
+    risks.forEach(risk => {
+      p5.text(`• ${risk}`, rightInnerX, rightCursor, rightInnerWidth);
+      rightCursor += 28;
+    });
+
+    rightCursor += 18;
+
+    const reflectionX = rightInnerX + 14;
+    p5.textFont(bodyFont);
+    p5.textSize(18);
+    p5.fill(textMuted);
+    p5.text("💭 Alles berücksichtigt?", reflectionX, rightCursor);
+    rightCursor += 40;
+
+    p5.stroke(255, 255, 255, 25);
+    p5.strokeWeight(1);
+    p5.line(rightInnerX, rightCursor, rightInnerX + rightInnerWidth, rightCursor);
+    p5.noStroke();
+    rightCursor += 24;
+
+    // Robustness radar as bar
+    p5.textFont(headingFont);
+    p5.textSize(26);
+    p5.fill(textPrimary);
+    p5.text("Robustheit", rightInnerX, rightCursor);
+    rightCursor += 40;
+
+    const barWidth = rightInnerWidth;
+    const barHeight = 18;
+    p5.noStroke();
+    p5.fill(255, 255, 255, 25);
+    p5.rect(rightInnerX, rightCursor, barWidth, barHeight, barHeight / 2);
+    p5.fill(robustnessColor);
+    p5.rect(
+      rightInnerX,
+      rightCursor,
+      barWidth * (robustnessScore / 10),
+      barHeight,
+      barHeight / 2
+    );
+
+    p5.textAlign(p5.RIGHT, p5.CENTER);
+    p5.textFont(headingFont);
+    p5.textSize(30);
+    p5.fill(textPrimary);
+    p5.text(
+      `${robustnessScore}/10`,
+      rightInnerX + barWidth,
+      rightCursor + barHeight / 2
+    );
+    p5.textAlign(p5.LEFT, p5.TOP);
+    rightCursor += barHeight + 28;
+
+    p5.textFont(bodyFont);
+    p5.textSize(15);
+    p5.fill(textMuted);
+    p5.textLeading(24);
+    p5.text(
+      "Je höher deine Robustheit, desto mehr unerwartete Ereignisse kann deine Planung verkraften.",
+      rightInnerX,
+      rightCursor,
+      rightInnerWidth
+    );
+    rightCursor += 70;
+
+    let assessment = "";
+    if (robustnessScore >= 8) {
+      assessment = "Sehr gut! Du bist auf fast alle Überraschungen vorbereitet.";
+    } else if (robustnessScore >= 6) {
+      assessment = "Solide Planung. Gegen viele Probleme geschützt, aber nicht gegen alle.";
+    } else if (robustnessScore >= 4) {
+      assessment = "Grundabsicherung vorhanden. Bei größeren Problemen könnte es schwierig werden.";
+    } else {
+      assessment = "Riskante Planung. Unerwartete Ereignisse können schnell zum Problem werden.";
+    }
+
+    p5.textFont(bodyFont);
+    p5.textSize(15);
+    p5.fill(robustnessColor);
+    p5.textLeading(24);
+    p5.text(
+      assessment,
+      rightInnerX,
+      rightCursor,
+      rightInnerWidth
+    );
+
+    // Buttons anchored to box edges
+    const backButton = this.buttonManager.getButton("backToPlanning");
+    const continueButton = this.buttonManager.getButton("continueToEvent");
+    const buttonY = this.p5.height - UI_CONFIG.BUTTON.EVALUATE.HEIGHT - 48;
+
+    if (backButton) {
+      backButton.y = buttonY;
+      backButton.x = panelX + cardPadding;
+    }
+
+    if (continueButton) {
+      continueButton.y = buttonY;
+      continueButton.x = panelX + panelWidth - continueButton.width - cardPadding;
     }
 
     p5.pop();
