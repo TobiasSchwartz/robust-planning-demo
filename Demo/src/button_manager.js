@@ -9,7 +9,14 @@ class ButtonManager {
       const button = createButton(label, x, y, width, height);
       button.onPress = onClick;
       button.setStyle("fillBg", UI_CONFIG.COLORS.BUTTON.DEFAULT);
+      button.setStyle("fillBgHover", UI_CONFIG.COLORS.BUTTON.HOVER);
+      button.setStyle("fillBgActive", UI_CONFIG.COLORS.BUTTON.ACTIVE);
+      // p5.touchgui labels are black by default
+      button.setStyle("fillLabel", UI_CONFIG.COLORS.TEXT);
+      button.setStyle("fillLabelHover", UI_CONFIG.COLORS.TEXT);
+      button.setStyle("fillLabelActive", UI_CONFIG.COLORS.TEXT);
       button.setStyle("rounding", 10);
+      button.setStyle("font", UI_CONFIG.FONTS.HEADING);
       button.setStyle("textSize", 30);
       
       button.id = id;
@@ -22,12 +29,26 @@ class ButtonManager {
       return button;
     }
   
+    // The single forward action of a screen
+    createPrimaryButton(id, label, x, y, width, height, onClick) {
+      const button = this.createMyButton(id, label, x, y, width, height, onClick);
+      this.setPrimaryStyle(button);
+      return button;
+    }
+
+    setPrimaryStyle(button) {
+      button.setStyle("fillBg", UI_CONFIG.COLORS.BUTTON.PRIMARY);
+      button.setStyle("fillBgHover", UI_CONFIG.COLORS.BUTTON.PRIMARY_HOVER);
+      button.setStyle("fillBgActive", UI_CONFIG.COLORS.BUTTON.PRIMARY_ACTIVE);
+    }
+
     createEvaluateButton(label, x, y, width, height, onClick) {
-      const button = this.createMyButton("evaluate", label, x, y, width, height, onClick);
+      const button = this.createPrimaryButton("evaluate", label, x, y, width, height, onClick);
 
       button.enabled = false;
       button.visible = false;
       button.setStyle("fillBg", UI_CONFIG.COLORS.BUTTON.DISABLED);
+      button.setStyle("fillLabel", UI_CONFIG.COLORS.TEXT_SECONDARY);
       button.setStyle("textSize", 26);
       return button;
     }
@@ -64,6 +85,14 @@ class ButtonManager {
       const disabledOptions = this.getDisabledOptions(state.selections);
       
       this.buttons.forEach((button, buttonKey) => {
+          // With a chosen option the label is blank: GameRenderer.drawCategoryLabels
+          // draws the category caption and the option itself
+          const categoryInfo = GAME_DATA.CATEGORIES.find((cat) => cat.id === buttonKey);
+          if (categoryInfo) {
+              const chosen = GAME_DATA.OPTIONS[categoryInfo.id][state.selections[categoryInfo.id]];
+              button.label = chosen ? "" : `${categoryInfo.icon} ${categoryInfo.name}`;
+          }
+
           // Handle category buttons
           if (button.category === button.id) {
               const isSelected = state.selectedCategory === button.category;
@@ -108,20 +137,21 @@ class ButtonManager {
               button.setStyle(
                   "fillBg",
                   isComplete
-                      ? UI_CONFIG.COLORS.BUTTON.SELECTED
+                      ? UI_CONFIG.COLORS.BUTTON.PRIMARY
                       : UI_CONFIG.COLORS.BUTTON.DISABLED
+              );
+              button.setStyle(
+                  "fillLabel",
+                  isComplete
+                      ? UI_CONFIG.COLORS.TEXT
+                      : UI_CONFIG.COLORS.TEXT_SECONDARY
               );
           }
       else if (buttonKey === "finalStage") {
-            const isLastStage = state.currentStage === state.totalStages; 
-            button.enabled = isLastStage;
-            button.visible = isLastStage;
-            button.setStyle(
-                "fillBg",
-                isLastStage
-                    ? "#23304f"
-                    : UI_CONFIG.COLORS.BUTTON.DISABLED
-            );
+            // Info button, only created on the result screen
+            button.enabled = true;
+            button.visible = true;
+            button.setStyle("fillBg", "#23304f");
             button.setStyle("fillLabel", UI_CONFIG.COLORS.TEXT);
             button.setStyle("textSize", 32);
             button.setStyle("rounding", 32);
@@ -129,22 +159,35 @@ class ButtonManager {
       });
     }
 
-    getDisabledOptions(selections) {
-      let disabledOptions = [];
-  
-      // Check each current selection for restrictions
-      Object.entries(selections).forEach(([category, optionId]) => {
-        if (optionId) {
-          const key = `${category}.${optionId}`;
-          const restrictions = GAME_DATA.DEPENDENCIES.RESTRICTIONS[key];
-          if (restrictions) {
-            disabledOptions = [...disabledOptions, ...restrictions.disables];
-          }
+    // Restrictions that apply to the current selections, as { disabled, reason }.
+    // A restriction applies in both directions: selecting its option disables
+    // the listed ones, and selecting any listed one disables its option.
+    getActiveRestrictions(selections) {
+      const isSelected = (key) => {
+        const [category, optionId] = key.split(".");
+        return selections[category] === optionId;
+      };
+      const active = [];
+
+      const restrictions = Object.entries(GAME_DATA.DEPENDENCIES.RESTRICTIONS);
+
+      restrictions.forEach(([key, restriction]) => {
+        if (isSelected(key)) {
+          active.push({ disabled: restriction.disables, reason: restriction.reason });
         }
       });
-  
-      return disabledOptions;
-    }   
+      restrictions.forEach(([key, restriction]) => {
+        if (restriction.disables.some(isSelected)) {
+          active.push({ disabled: [key], reason: restriction.reason });
+        }
+      });
+
+      return active;
+    }
+
+    getDisabledOptions(selections) {
+      return this.getActiveRestrictions(selections).flatMap((r) => r.disabled);
+    }
   
     hideAllOptionButtons() {
       const buttonsToRemove = [];

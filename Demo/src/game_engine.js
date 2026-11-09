@@ -14,7 +14,7 @@ class GameEngine {
         food: null
       },
       spent: 0,
-      robustness: 0,
+      survivalShare: 0,
       infoPanel: null
     };
   }
@@ -120,9 +120,6 @@ class GameEngine {
       return;
     }
 
-    // Calculate robustness score for preview
-    this.state.robustness = this.calculateRobustness();
-
     // Phase auf "summary" setzen
     this.state.phase = "summary";
   }
@@ -156,9 +153,9 @@ class GameEngine {
     const result = EVENT_SYSTEM.evaluateEvent(this.state.event, this.state.selections);
     this.state.eventResult = result;
 
-    // Calculate robustness score and what-if scenarios
-    this.state.robustness = this.calculateRobustness();
+    // Share of all events the plan survives (0..1), derived from the real event rules
     this.state.whatIfScenarios = this.calculateWhatIfScenarios();
+    this.state.survivalShare = this.state.whatIfScenarios.survived / this.state.whatIfScenarios.total;
 
     // Phase auf "result" setzen
     this.state.phase = "result";

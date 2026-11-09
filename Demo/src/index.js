@@ -21,6 +21,26 @@ function setup() {
     
     // Initial setup
     gameRenderer.setup();
+
+    setupIdleReset();
+}
+
+// Unattended screen: reload when nobody touches it for a while
+function setupIdleReset() {
+    let lastInput = Date.now();
+    const markActive = () => { lastInput = Date.now(); };
+
+    ["pointerdown", "pointermove", "touchstart", "keydown"].forEach((type) =>
+        document.addEventListener(type, markActive, { capture: true, passive: true })
+    );
+
+    setInterval(() => {
+        if (gameEngine.state.phase === "intro") {
+            lastInput = Date.now();
+        } else if (Date.now() - lastInput >= UI_CONFIG.IDLE_RESET_MS) {
+            gameEngine.resetGame();
+        }
+    }, 1000);
 }
 
 // p5.js draw function - called continuously
@@ -34,6 +54,9 @@ function draw() {
     // Only draw GUI elements after game has started
     if (gameEngine.state.phase !== "intro") {
         drawGui();
+    }
+    if (gameEngine.state.phase === "planning") {
+        gameRenderer.drawCategoryLabels(gameEngine.state);
     }
 }
 

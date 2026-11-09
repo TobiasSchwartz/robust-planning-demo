@@ -82,7 +82,7 @@ class GameRenderer {
       );
 
       // Add "Zum Festival" button (right side)
-      this.buttonManager.createMyButton(
+      this.buttonManager.createPrimaryButton(
         "continueToEvent",
         "Zum Festival! →",
         layout.x + UI_CONFIG.BUTTON.EVALUATE.WIDTH + buttonGap,
@@ -97,7 +97,7 @@ class GameRenderer {
 
       // Add only the continue button
       const layout = getLayout.evaluateButton();
-      this.continueButton = this.buttonManager.createMyButton(
+      this.continueButton = this.buttonManager.createPrimaryButton(
         "continue",
         "Weiter →",
         layout.x,
@@ -113,35 +113,31 @@ class GameRenderer {
       
       // Add restart button
       const layout = getLayout.evaluateButton();
-      this.buttonManager.createMyButton(
+      this.buttonManager.createPrimaryButton(
         "reset",
-        "Nochmal Probieren?",
+        "Nochmal probieren?",
         layout.x,
         layout.y,
         UI_CONFIG.BUTTON.EVALUATE.WIDTH,
         UI_CONFIG.BUTTON.EVALUATE.HEIGHT,
         () => this.gameEngine.dispatch("RESET_GAME")
       );
-      const isLastStage = state.currentStage === state.totalStages;
 
-      if (isLastStage) {
-        const infoButton = this.buttonManager.createMyButton(
-          "finalStage",
-          "?",
-          layout.x,
-          layout.y,
-          64,
-          64,
-          () => window.open("https://github.com/TobiasSchwartz/robust-planning-demo/blob/b075fec6d61dce6c48e37a771c7a681c7327058a/poster_ki-erlebnistag.pdf")
-        );
+      // Info button linking to the poster
+      const infoButton = this.buttonManager.createMyButton(
+        "finalStage",
+        "?",
+        layout.x,
+        layout.y,
+        64,
+        64,
+        () => window.open("https://github.com/TobiasSchwartz/robust-planning-demo/blob/b075fec6d61dce6c48e37a771c7a681c7327058a/poster_ki-erlebnistag.pdf")
+      );
 
-        if (infoButton) {
-          infoButton.setStyle("rounding", 32);
-          infoButton.setStyle("textSize", 32);
-          infoButton.setStyle("fillBg", "#23304f");
-          infoButton.setStyle("fillLabel", UI_CONFIG.COLORS.TEXT);
-        }
-      }
+      infoButton.setStyle("rounding", 32);
+      infoButton.setStyle("textSize", 32);
+      infoButton.setStyle("fillBg", "#23304f");
+      infoButton.setStyle("fillLabel", UI_CONFIG.COLORS.TEXT);
     }
     else if (state.phase === "planning") {
       // If returning to planning from another phase, recreate buttons
@@ -224,7 +220,7 @@ class GameRenderer {
       const x = categoryLayout.startX + 
                 index * (UI_CONFIG.BUTTON.CATEGORY.WIDTH + UI_CONFIG.BUTTON.CATEGORY.SPACING);
 
-      this.buttonManager.createMyButton(
+      const button = this.buttonManager.createMyButton(
         category.id,
         `${category.icon} ${category.name}`,
         x,
@@ -233,6 +229,8 @@ class GameRenderer {
         UI_CONFIG.BUTTON.CATEGORY.HEIGHT,
         () => this.gameEngine.dispatch("SELECT_CATEGORY", category.id)
       );
+      // A category button has category === id, an option button has category !== id
+      button.category = category.id;
     });
 
     this.buttonManager.createEvaluateButton(
@@ -272,6 +270,44 @@ class GameRenderer {
             this.drawEventPanel(state);
             break;
     }
+  }
+
+  // Category buttons with a chosen option: small category caption above, the option as main line.
+  // p5.touchgui draws one label in one style, so this is drawn on top after drawGui().
+  drawCategoryLabels(state) {
+    const { p5 } = this;
+    const maxWidth = UI_CONFIG.BUTTON.CATEGORY.WIDTH - 32;
+
+    this.categories.forEach((category) => {
+      const chosen = this.options[category.id][state.selections[category.id]];
+      const button = this.buttonManager.getButton(category.id);
+      if (!chosen || !button || !button.visible) return;
+
+      // The caption sits on the default fill, the open and hovered fills are lighter
+      const onDefaultFill = !button.selected && !button._hover && !button._active;
+      const centerX = button.x + button.width / 2;
+
+      p5.push();
+      p5.noStroke();
+      p5.textFont(UI_CONFIG.FONTS.HEADING);
+      p5.textAlign(p5.CENTER, p5.CENTER);
+
+      p5.drawingContext.letterSpacing = "1px";
+      p5.textSize(16);
+      p5.fill(onDefaultFill ? UI_CONFIG.COLORS.TEXT_CAPTION : UI_CONFIG.COLORS.TEXT);
+      p5.text(category.name.toUpperCase(), centerX, button.y + 27);
+      p5.drawingContext.letterSpacing = "0px";
+
+      const mainText = `${chosen.icon} ${chosen.name}`;
+      let size = 30;
+      p5.textSize(size);
+      while (size > 16 && p5.textWidth(mainText) > maxWidth) {
+        p5.textSize(--size);
+      }
+      p5.fill(UI_CONFIG.COLORS.TEXT);
+      p5.text(mainText, centerX, button.y + 63);
+      p5.pop();
+    });
   }
 
   drawIntro() {
@@ -406,29 +442,29 @@ class GameRenderer {
 
       // Title
       p5.textSize(30);
-      p5.text(option.name, x, y_title);
+      p5.text(`${option.icon ? option.icon + " " : ""}${option.name}`, x, y_title);
 
       // Cost
       p5.textSize(20);
       p5.fill(UI_CONFIG.COLORS.HIGHLIGHT);
-      p5.text(`Preis: ${option.cost}€`, x, y_info_text+30);
+      p5.text(`Preis: ${option.costLabel ?? `${option.cost}€`}`, x, y_info_text+30);
 
       // Description
       p5.fill(UI_CONFIG.COLORS.TEXT);
       p5.textSize(20);
-      p5.textLeading(24);
-      p5.text(option.description, x, y_info_text + 60, panel.WIDTH - 40, text_width);
+      p5.textLeading(26);
+      p5.text(option.description, x, y_info_text + 60, text_width);
 
       // Pros
       if (option.pro) {
         p5.textSize(20);
-        p5.fill(UI_CONFIG.COLORS.HIGHLIGHT);
+        p5.fill("#52E08C");
         p5.text("✓ Vorteile:", x, y_info_text + 180);
         
         p5.fill(UI_CONFIG.COLORS.TEXT);
-        p5.textSize(16);
+        p5.textSize(18);
         option.pro.forEach((pro, index) => {
-          p5.text(`• ${pro}`, x + 10, y_info_text + 210 + index * 25);
+          p5.text(`• ${pro}`, x + 10, y_info_text + 210 + index * 28);
         });
       }
 
@@ -439,9 +475,9 @@ class GameRenderer {
         p5.text("✗ Nachteile:", x, y_info_text + 310);
         
         p5.fill(UI_CONFIG.COLORS.TEXT);
-        p5.textSize(16);
+        p5.textSize(18);
         option.con.forEach((con, index) => {
-          p5.text(`• ${con}`, x + 10, y_info_text + 340 + index * 25);
+          p5.text(`• ${con}`, x + 10, y_info_text + 340 + index * 28);
         });
       }
     } else {
@@ -455,40 +491,36 @@ class GameRenderer {
         y_title
       );
       
-      const disabledOptions = this.buttonManager.getDisabledOptions(state.selections);
-      const hasDisabledOptions = disabledOptions.length > 0;
-
-      let reason = ".";
+      // Hint under the blurb: restriction reasons for the open category, or a short nudge
+      let hintText = "";
+      let reasonCount = 0;
       if (state.selectedCategory) {
-          const relevantRestrictions = Object.entries(state.selections)
-              .filter(([cat, optionId]) => 
-                  // Only consider actual selections
-                  optionId !== null &&
-                  // Get restrictions that affect current category
-                  GAME_DATA.DEPENDENCIES.RESTRICTIONS[`${cat}.${optionId}`]?.disables
-                      .some(disabled => disabled.startsWith(state.selectedCategory + "."))
-              )
-              .map(([cat, optionId]) => {
-                  const selectedName = GAME_DATA.OPTIONS[cat][optionId].name;
-                  const restriction = GAME_DATA.DEPENDENCIES.RESTRICTIONS[`${cat}.${optionId}`];
-                  return `• ${restriction.reason}`;
-              });
+          hintText = "Wähle eine Option für mehr Informationen.";
+          // One reason per restriction that disables something in the current category
+          const covered = new Set();
+          const relevantRestrictions = this.buttonManager.getActiveRestrictions(state.selections)
+              .filter(({ disabled }) => {
+                  const inCategory = disabled.filter(key => key.startsWith(state.selectedCategory + "."));
+                  const isNew = inCategory.some(key => !covered.has(key));
+                  inCategory.forEach(key => covered.add(key));
+                  return isNew;
+              })
+              .map(({ reason }) => `• ${reason}`);
 
+          reasonCount = relevantRestrictions.length;
           if (relevantRestrictions.length > 0) {
-              reason = ":\n\n" + relevantRestrictions.join("\n\n");
+              // Tighter spacing when several reasons have to fit into the panel
+              hintText = "Nicht verfügbar:\n\n" + relevantRestrictions.join(relevantRestrictions.length > 2 ? "\n" : "\n\n");
           }
       }
-      
 
-      const disabledOptionsText = hasDisabledOptions ?
-        `Einige Optionen sind nicht verfügbar${reason}` :
-        `Wähle eine Option für mehr Informationen.`;
 
-      p5.textSize(24);
-      p5.textLeading(24);
+      // Smaller text when several reasons have to fit above "Ausgegeben"
+      p5.textSize(reasonCount > 2 ? 20 : 24);
+      p5.textLeading(reasonCount > 2 ? 26 : 31);
       p5.text(
         GAME_DATA.CATEGORY_DESCRIPTIONS[state.selectedCategory || "default"] 
-        + "\n\n" + disabledOptionsText,
+        + (hintText ? "\n\n" + hintText : ""),
         x,
         y_info_text,
         text_width
@@ -496,7 +528,7 @@ class GameRenderer {
 
       
       p5.textSize(20);
-      p5.fill(UI_CONFIG.COLORS.HIGHLIGHT);
+      p5.fill(UI_CONFIG.COLORS.TEXT_SECONDARY);
       p5.text(
         `Ausgegeben: ${state.spent}€`,
         x,
@@ -582,8 +614,8 @@ class GameRenderer {
       p5.drawingContext.shadowBlur = 0;
       p5.drawingContext.shadowColor = 'rgba(0,0,0,0)';
 
-      const headingFont = "Arial";
-      const bodyFont = "Helvetica Neue";
+      const headingFont = UI_CONFIG.FONTS.HEADING;
+      const bodyFont = UI_CONFIG.FONTS.BODY;
       const cardRadius = 24;
       const surfacePadding = 36;
       const cardGap = 28;
@@ -592,15 +624,15 @@ class GameRenderer {
       const contentX = panelX + surfacePadding;
       const contentY = panelY + surfacePadding;
       const contentWidth = panelWidth - surfacePadding * 2;
-      const contentHeight = panelHeight - surfacePadding * 2;
 
-      const outcomeHeight = Math.max(210, Math.min(contentHeight * 0.45, 260));
+      const outcomeHeight = 236;
 
       const cardBg = p5.color(18, 32, 65);
       cardBg.setAlpha(235);
 
       const accent = this.getResultColor(state);
       const textPrimary = p5.color(UI_CONFIG.COLORS.TEXT);
+      const textSoft = p5.color(UI_CONFIG.COLORS.TEXT_CAPTION);
       const textMuted = p5.color(UI_CONFIG.COLORS.TEXT_SECONDARY);
 
       // Outcome card
@@ -609,7 +641,9 @@ class GameRenderer {
       p5.rect(contentX, contentY, contentWidth, outcomeHeight, cardRadius);
 
       const emoji = state.eventResult.survived ? "🎉" : "⚠️";
-      const statusHeadline = state.eventResult.survived ? "Festival gemeistert!" : "Festival gescheitert";
+      const statusHeadline = state.eventResult.survived
+        ? "Festival gemeistert!"
+        : state.event.failHeadline || "Festival gescheitert";
 
       p5.textAlign(p5.LEFT, p5.TOP);
       p5.textFont(headingFont);
@@ -617,34 +651,41 @@ class GameRenderer {
       p5.fill(textPrimary);
       p5.text(emoji, contentX + cardPadding, contentY + cardPadding - 6);
 
-      p5.textSize(34);
+      p5.textStyle(p5.BOLD);
+      p5.textSize(40);
       p5.fill(accent);
-      p5.text(statusHeadline, contentX + cardPadding + 80, contentY + cardPadding);
+      p5.text(statusHeadline, contentX + cardPadding + 84, contentY + cardPadding - 2);
+      p5.textStyle(p5.NORMAL);
 
       p5.textFont(bodyFont);
-      p5.fill(textMuted);
-      p5.textSize(22);
-      p5.text(state.event.name, contentX + cardPadding + 80, contentY + cardPadding + 46);
+      p5.fill(textSoft);
+      p5.textSize(28);
+      p5.text(state.event.name, contentX + cardPadding + 84, contentY + cardPadding + 52);
 
       p5.fill(textPrimary);
-      p5.textSize(20);
-      p5.textLeading(28);
+      p5.textSize(this.fitMessageSize(state.eventResult.message, contentWidth - cardPadding * 2, 30, 26));
+      p5.textLeading(40);
       p5.text(
         state.eventResult.message,
         contentX + cardPadding,
-        contentY + cardPadding + 100,
-        contentWidth - cardPadding * 2,
-        outcomeHeight - cardPadding * 1.6
+        contentY + cardPadding + 108,
+        contentWidth - cardPadding * 2
       );
 
-      // Column layout
+      // Column layout, the restart button sits inside the panel below the cards
+      const buttonPadding = 24;
+      const buttonY = panelY + panelHeight - buttonPadding - UI_CONFIG.BUTTON.EVALUATE.HEIGHT;
       const columnsTop = contentY + outcomeHeight + cardGap;
-      const availableHeight = contentHeight - (outcomeHeight + cardGap) - cardPadding;
-      const columnHeight = Math.max(230, availableHeight);
+      const columnHeight = buttonY - 20 - columnsTop;
       const columnWidth = (contentWidth - cardGap) / 2;
 
       const leftX = contentX;
       const rightX = contentX + columnWidth + cardGap;
+
+      // Card titles share one baseline, the content starts below it
+      const titleBaseline = columnsTop + cardPadding + 28;
+      const cardContentTop = columnsTop + cardPadding + 50;
+      const cardContentBottom = columnsTop + columnHeight - cardPadding;
 
       // Left column: robustness insights
       p5.fill(cardBg);
@@ -652,16 +693,18 @@ class GameRenderer {
 
       const leftInnerX = leftX + cardPadding;
 
+      p5.textAlign(p5.LEFT, p5.BASELINE);
       p5.textFont(headingFont);
-      p5.textSize(26);
+      p5.textStyle(p5.BOLD);
+      p5.textSize(30);
       p5.fill(textPrimary);
-      const robustHeaderY = columnsTop + cardPadding;
-      p5.text("Robustheits-Check", leftInnerX, robustHeaderY);
+      p5.text("Robustheits-Check", leftInnerX, titleBaseline);
+      p5.textStyle(p5.NORMAL);
 
       // Robustness gauge with text beside it
-      const gaugeRadius = 55;
-      const gaugeCenterX = leftInnerX + gaugeRadius;
-      const gaugeCenterY = robustHeaderY + 80 + gaugeRadius;
+      const gaugeRadius = 52;
+      const gaugeCenterX = leftInnerX + gaugeRadius + 6;
+      const gaugeCenterY = (cardContentTop + cardContentBottom) / 2;
 
       p5.noFill();
       p5.strokeWeight(12);
@@ -669,11 +712,10 @@ class GameRenderer {
       p5.stroke(trackColor);
       p5.arc(gaugeCenterX, gaugeCenterY, gaugeRadius * 2, gaugeRadius * 2, -p5.HALF_PI, p5.HALF_PI * 3);
 
-      const robustnessScoreRaw = state.eventResult?.robustnessScore ?? state.robustness ?? 0;
-      const robustnessScore = Math.max(0, Math.min(10, robustnessScoreRaw));
-      const robustnessColor = this.getRobustnessColor(robustnessScore);
-      const sweep = (robustnessScore / 10) * p5.TWO_PI;
-      p5.stroke(robustnessColor);
+      const survivalShare = Math.max(0, Math.min(1, state.survivalShare || 0));
+      const verdict = this.getRobustnessVerdict(survivalShare);
+      const sweep = survivalShare * p5.TWO_PI;
+      p5.stroke(verdict.color);
       p5.arc(
         gaugeCenterX,
         gaugeCenterY,
@@ -685,37 +727,35 @@ class GameRenderer {
 
       p5.noStroke();
       p5.textAlign(p5.CENTER, p5.CENTER);
-      p5.textFont(headingFont);
-      p5.fill(textPrimary);
-      p5.textSize(30);
-      p5.text(`${robustnessScore}/10`, gaugeCenterX, gaugeCenterY - 2);
-
       p5.textFont(bodyFont);
-      p5.textSize(14);
+      p5.textSize(16);
       p5.fill(textMuted);
-      p5.text("Robustheit", gaugeCenterX, gaugeCenterY + 22);
+      p5.text("Robustheit", gaugeCenterX, gaugeCenterY);
 
-      const gaugeInfoX = gaugeCenterX + gaugeRadius + 28;
-      const gaugeInfoWidth = columnWidth - (gaugeInfoX - leftInnerX) - cardPadding;
+      const gaugeInfoX = gaugeCenterX + gaugeRadius + 30;
+      const gaugeInfoWidth = columnWidth - (gaugeInfoX - leftX) - cardPadding;
 
       p5.textAlign(p5.LEFT, p5.TOP);
       p5.textFont(headingFont);
-      p5.textSize(18);
+      p5.textStyle(p5.BOLD);
+      p5.textSize(32);
       p5.fill(textPrimary);
       p5.text(
-        "Durchschnittliche Widerstandskraft",
+        verdict.heading,
         gaugeInfoX,
-        gaugeCenterY - 32,
+        gaugeCenterY - 56,
         gaugeInfoWidth
       );
+      p5.textStyle(p5.NORMAL);
 
       p5.textFont(bodyFont);
-      p5.textSize(15);
-      p5.fill(textMuted);
+      p5.textSize(22);
+      p5.textLeading(28);
+      p5.fill(textSoft);
       p5.text(
-        "Je höher, desto mehr Zufalls-Events hält deine Planung aus.",
+        verdict.sentence,
         gaugeInfoX,
-        gaugeCenterY - 2,
+        gaugeCenterY - 56 + 42,
         gaugeInfoWidth
       );
 
@@ -724,13 +764,13 @@ class GameRenderer {
       p5.rect(rightX, columnsTop, columnWidth, columnHeight, cardRadius);
 
       const rightInnerX = rightX + cardPadding;
-      let rightCursor = columnsTop + cardPadding;
 
+      p5.textAlign(p5.LEFT, p5.BASELINE);
       p5.textFont(headingFont);
-      p5.textSize(26);
+      p5.textStyle(p5.BOLD);
+      p5.textSize(30);
       p5.fill(textPrimary);
-      p5.text("Deine Auswahl", rightInnerX, rightCursor);
-      rightCursor += 38;
+      p5.text("Deine Auswahl", rightInnerX, titleBaseline);
 
       const selectionEntries = GAME_DATA.CATEGORIES
         .map(category => {
@@ -740,20 +780,47 @@ class GameRenderer {
         })
         .filter(Boolean);
 
-      const listTop = rightCursor;
+      const totalCost = Object.entries(state.selections).reduce((sum, [category, choiceId]) => {
+        const option = GAME_DATA.OPTIONS[category]?.[choiceId];
+        return option ? sum + option.cost : sum;
+      }, 0);
+
+      // Total sits on the title line, aligned with the right edge of the tile grid
       const tileGap = 16;
       const gridWidth = columnWidth - cardPadding * 2;
+      const totalRight = rightInnerX + gridWidth;
+      const totalAmount = `${totalCost}€`;
+      p5.textAlign(p5.RIGHT, p5.BASELINE);
+      p5.text(totalAmount, totalRight, titleBaseline);
+      const totalAmountWidth = p5.textWidth(totalAmount);
+      p5.textStyle(p5.NORMAL);
+      p5.textFont(bodyFont);
+      p5.textSize(22);
+      p5.fill(textSoft);
+      p5.text("Gesamtkosten:", totalRight - totalAmountWidth - 12, titleBaseline);
+
+      const listTop = cardContentTop;
+      p5.textAlign(p5.LEFT, p5.TOP);
 
       if (selectionEntries.length === 0) {
         p5.textFont(bodyFont);
-        p5.textSize(16);
+        p5.textSize(22);
         p5.fill(textMuted);
         p5.text("Keine Auswahl getroffen.", rightInnerX, listTop);
-        rightCursor = listTop + 24;
       } else {
         const columnsCount = Math.min(3, Math.max(1, selectionEntries.length));
         const tileWidth = (gridWidth - tileGap * (columnsCount - 1)) / columnsCount;
-        const tileHeight = 78;
+        const tileHeight = cardContentBottom - listTop;
+        const tilePadding = 12;
+
+        // One name size for all tiles, it gets smaller instead of wrapping onto the price
+        p5.textFont(headingFont);
+        const nameSize = this.fitTextSize(
+          selectionEntries.map(entry => entry.option.name),
+          26,
+          16,
+          tileWidth - tilePadding * 2
+        );
 
         selectionEntries.forEach((entry, index) => {
           const row = Math.floor(index / columnsCount);
@@ -762,48 +829,34 @@ class GameRenderer {
           const tileY = listTop + row * (tileHeight + tileGap);
 
           p5.fill(255, 255, 255, 18);
-          p5.rect(tileX, tileY, tileWidth, tileHeight, 12);
+          p5.rect(tileX, tileY, tileWidth, tileHeight, 14);
 
           p5.textAlign(p5.LEFT, p5.TOP);
           p5.textFont(bodyFont);
-          p5.textSize(11);
+          p5.textSize(16);
           p5.fill(textMuted);
-          p5.text(entry.category.name.toUpperCase(), tileX + 10, tileY + 8);
+          p5.text(entry.category.name.toUpperCase(), tileX + tilePadding, tileY + tilePadding);
 
           p5.textFont(headingFont);
-          p5.textSize(16);
+          p5.textSize(nameSize);
           p5.fill(textPrimary);
-          p5.text(entry.option.name, tileX + 10, tileY + 26, tileWidth - 20);
+          p5.text(entry.option.name, tileX + tilePadding, tileY + tilePadding + 28);
 
           p5.textAlign(p5.LEFT, p5.BOTTOM);
           p5.textFont(bodyFont);
-          p5.textSize(13);
-          p5.fill(textMuted);
-          p5.text(`${entry.option.cost}€`, tileX + 10, tileY + tileHeight - 10);
+          p5.textStyle(p5.BOLD);
+          p5.textSize(22);
+          p5.fill(textSoft);
+          p5.text(entry.option.costLabel ?? `${entry.option.cost}€`, tileX + tilePadding, tileY + tileHeight - tilePadding);
+          p5.textStyle(p5.NORMAL);
         });
-
-        const rows = Math.ceil(selectionEntries.length / columnsCount);
-        rightCursor = listTop + rows * tileHeight + Math.max(0, rows - 1) * tileGap;
       }
-      rightCursor += tileGap * 2;
-
-      const totalCost = Object.entries(state.selections).reduce((sum, [category, choiceId]) => {
-        const option = GAME_DATA.OPTIONS[category]?.[choiceId];
-        return option ? sum + option.cost : sum;
-      }, 0);
-
-      p5.textFont(headingFont);
-      p5.textSize(18);
-      p5.fill(accent);
-      p5.text(`Gesamtkosten: ${totalCost}€`, rightInnerX, rightCursor);
-      rightCursor += 22;
 
       // Event recap is already present in the hero card, so we keep the summary focused here.
 
       // Buttons
       const resetButton = this.buttonManager.getButton("reset");
       const finalButton = this.buttonManager.getButton("finalStage");
-      const buttonY = this.p5.height - UI_CONFIG.BUTTON.EVALUATE.HEIGHT - 50;
 
       if (resetButton) {
         resetButton.y = buttonY;
@@ -857,15 +910,17 @@ class GameRenderer {
 
     // Draw semi-transparent overlay
     p5.push();
-    const overlayColor = p5.color(18, 32, 65);
+    const overlayColor = p5.color(UI_CONFIG.COLORS.PANEL_BG);
     overlayColor.setAlpha(240);
     p5.fill(overlayColor);
-    p5.noStroke();
+    p5.stroke(UI_CONFIG.COLORS.LINE);
+    p5.strokeWeight(4);
     p5.rect(panelX, panelY, panelWidth, panelHeight, 24);
+    p5.noStroke();
 
     // Constants
-    const headingFont = "Arial";
-    const bodyFont = "Helvetica Neue";
+    const headingFont = UI_CONFIG.FONTS.HEADING;
+    const bodyFont = UI_CONFIG.FONTS.BODY;
     const cardRadius = 24;
     const surfacePadding = 36;
     const cardGap = 28;
@@ -874,15 +929,15 @@ class GameRenderer {
     const contentX = panelX + surfacePadding;
     const contentY = panelY + surfacePadding;
     const contentWidth = panelWidth - surfacePadding * 2;
-    const contentHeight = panelHeight - surfacePadding * 2;
 
     const cardBg = p5.color(18, 32, 65);
     cardBg.setAlpha(235);
 
     const textPrimary = p5.color(UI_CONFIG.COLORS.TEXT);
+    const textSoft = p5.color(UI_CONFIG.COLORS.TEXT_CAPTION);
     const textMuted = p5.color(UI_CONFIG.COLORS.TEXT_SECONDARY);
-    const highlightColor = p5.color(UI_CONFIG.COLORS.HIGHLIGHT);
-    const errorColor = p5.color(UI_CONFIG.COLORS.ERROR);
+    const proColor = p5.color("#52E08C");
+    const conColor = p5.color(UI_CONFIG.COLORS.CON);
 
     const selectionEntries = GAME_DATA.CATEGORIES
       .map(category => {
@@ -892,59 +947,85 @@ class GameRenderer {
       })
       .filter(Boolean);
 
-    const robustnessScore = Math.max(0, Math.min(10, state.robustness || 0));
-    const robustnessColor = this.getRobustnessColor(robustnessScore);
-
     const clampText = (text = "", maxChars = 110) => {
       if (!text) return "";
       return text.length > maxChars ? `${text.slice(0, maxChars - 1)}…` : text;
     };
 
-    // Top instruction banner
-    const instructionsHeight = 90;
-    const instructionsX = contentX;
-    const instructionsY = contentY;
+    // Top heading
+    const instructionsHeight = 60;
     p5.textAlign(p5.LEFT, p5.TOP);
     p5.textFont(headingFont);
-    p5.textSize(34);
-    p5.fill(highlightColor);
-    p5.text("Letzter Check vor dem Festival", instructionsX, instructionsY);
+    p5.textStyle(p5.BOLD);
+    p5.textSize(38);
+    p5.fill(textPrimary);
+    p5.text("Letzter Check vor dem Festival", contentX, contentY);
+    p5.textStyle(p5.NORMAL);
 
-    p5.textFont(bodyFont);
-    p5.textSize(18);
-    p5.fill(textMuted);
-    p5.text(
-      "Überprüfe deine Auswahl noch einmal in Ruhe – du kannst jederzeit zurück oder direkt starten.",
-      instructionsX,
-      instructionsY + 42,
-      contentWidth - cardPadding
-    );
+    // Buttons sit inside the panel, the columns end above them
+    const buttonPadding = 24;
+    const buttonY = panelY + panelHeight - buttonPadding - UI_CONFIG.BUTTON.EVALUATE.HEIGHT;
 
     // Main area split into two columns like the final overview
     const columnsTop = contentY + instructionsHeight;
-    const columnsHeight = contentHeight - instructionsHeight;
+    const columnsHeight = buttonY - 20 - columnsTop;
     const leftWidth = (contentWidth - cardGap) * 0.62;
     const rightWidth = contentWidth - leftWidth - cardGap;
+
+    // Card titles share one baseline, the content starts below it
+    const titleBaseline = columnsTop + cardPadding + 28;
+    const contentTop = columnsTop + cardPadding + 50;
+    const contentBottom = columnsTop + columnsHeight - cardPadding;
 
     // LEFT: Selection grid
     p5.fill(cardBg);
     p5.rect(contentX, columnsTop, leftWidth, columnsHeight, cardRadius);
 
     const leftInnerX = contentX + cardPadding;
-    const leftInnerY = columnsTop + cardPadding;
     const gridWidth = leftWidth - cardPadding * 2;
 
+    p5.textAlign(p5.LEFT, p5.BASELINE);
     p5.textFont(headingFont);
-    p5.textSize(26);
+    p5.textStyle(p5.BOLD);
+    p5.textSize(30);
     p5.fill(textPrimary);
-    p5.text("Auswahl-Check", leftInnerX, leftInnerY);
+    p5.text("Auswahl-Check", leftInnerX, titleBaseline);
 
-    const gridStartY = leftInnerY + 38;
+    // Total sits on the title line, aligned with the right edge of the tile grid
+    const totalRight = leftInnerX + gridWidth;
+    const totalAmount = `${state.spent}€`;
+    p5.textAlign(p5.RIGHT, p5.BASELINE);
+    p5.text(totalAmount, totalRight, titleBaseline);
+    const totalAmountWidth = p5.textWidth(totalAmount);
+    p5.textStyle(p5.NORMAL);
+    p5.textFont(bodyFont);
+    p5.textSize(22);
+    p5.fill(textSoft);
+    p5.text("Gesamtkosten:", totalRight - totalAmountWidth - 12, titleBaseline);
+
+    const gridStartY = contentTop;
     const tileGap = 18;
     const gridColumns = Math.min(3, Math.max(1, selectionEntries.length || 1));
     const tileWidth = (gridWidth - tileGap * (gridColumns - 1)) / gridColumns;
-    const tileHeight = 226;
+    const tileHeight = contentBottom - gridStartY;
     const tilePadding = 16;
+
+    // One note size for all tiles, as large as the longest note allows
+    const notes = selectionEntries.flatMap(entry => [
+      ...(entry.option.pro || []).slice(0, 2).map(point => `+ ${clampText(point, 55)}`),
+      ...(entry.option.con || []).slice(0, 2).map(point => `− ${clampText(point, 55)}`)
+    ]);
+    p5.textFont(bodyFont);
+    const noteSize = this.fitTextSize(notes, 20, 16, tileWidth - tilePadding * 2);
+
+    // Same for the names, so all tiles keep one baseline
+    p5.textFont(headingFont);
+    const nameSize = this.fitTextSize(
+      selectionEntries.map(entry => `${entry.option.icon || ""} ${entry.option.name}`),
+      28,
+      18,
+      tileWidth - tilePadding * 2
+    );
 
     selectionEntries.forEach((entry, index) => {
       const row = Math.floor(index / gridColumns);
@@ -953,35 +1034,32 @@ class GameRenderer {
       const tileY = gridStartY + row * (tileHeight + tileGap);
 
       p5.fill(255, 255, 255, 18);
-      p5.rect(tileX, tileY, tileWidth, tileHeight, 16);
+      p5.rect(tileX, tileY, tileWidth, tileHeight, 14);
 
       p5.textAlign(p5.LEFT, p5.TOP);
       p5.textFont(bodyFont);
-      p5.textSize(12);
+      p5.textSize(16);
       p5.fill(textMuted);
       p5.text(entry.category.name.toUpperCase(), tileX + tilePadding, tileY + tilePadding);
 
       p5.textFont(headingFont);
-      p5.textSize(20);
+      p5.textSize(nameSize);
       p5.fill(textPrimary);
-      p5.text(
-        `${entry.option.icon || ""} ${entry.option.name}`,
-        tileX + tilePadding,
-        tileY + tilePadding + 18,
-        tileWidth - tilePadding * 2
-      );
+      p5.text(`${entry.option.icon || ""} ${entry.option.name}`, tileX + tilePadding, tileY + tilePadding + 28);
 
       p5.textFont(bodyFont);
-      p5.textSize(18);
-      p5.fill(highlightColor);
+      p5.textStyle(p5.BOLD);
+      p5.textSize(24);
+      p5.fill(textSoft);
       p5.text(
-        `${entry.option.cost}€`,
+        entry.option.costLabel ?? `${entry.option.cost}€`,
         tileX + tilePadding,
-        tileY + tilePadding + 58
+        tileY + tilePadding + 74
       );
+      p5.textStyle(p5.NORMAL);
 
       // Subtle divider between header and notes
-      const dividerY = tileY + tilePadding + 90;
+      const dividerY = tileY + tilePadding + 124;
       p5.stroke(255, 255, 255, 30);
       p5.strokeWeight(1);
       p5.line(tileX + tilePadding, dividerY, tileX + tileWidth - tilePadding, dividerY);
@@ -990,26 +1068,28 @@ class GameRenderer {
       const proPoints = (entry.option.pro || []).slice(0, 2).map(point => clampText(point, 55));
       const conPoints = (entry.option.con || []).slice(0, 2).map(point => clampText(point, 55));
 
-      let textCursor = dividerY + 16;
+      const noteStep = noteSize + 14;
+      let textCursor = dividerY + 22;
+
+      p5.textFont(bodyFont);
+      p5.textSize(noteSize);
 
       if (proPoints.length > 0) {
-        p5.textFont(bodyFont);
-        p5.textSize(13);
-        p5.fill("#52E08C");
+        p5.fill(proColor);
         proPoints.forEach(point => {
-          p5.text(`+ ${point}`, tileX + tilePadding, textCursor, tileWidth - tilePadding * 2);
-          textCursor += 18;
+          p5.text(`+ ${point}`, tileX + tilePadding, textCursor);
+          textCursor += noteStep;
         });
       }
 
       if (conPoints.length > 0) {
         if (proPoints.length > 0) {
-          textCursor += 6;
+          textCursor += 16;
         }
-        p5.fill(errorColor);
+        p5.fill(conColor);
         conPoints.forEach(point => {
-          p5.text(`− ${point}`, tileX + tilePadding, textCursor, tileWidth - tilePadding * 2);
-          textCursor += 18;
+          p5.text(`− ${point}`, tileX + tilePadding, textCursor);
+          textCursor += noteStep;
         });
       }
     });
@@ -1017,7 +1097,7 @@ class GameRenderer {
     if (selectionEntries.length === 0) {
       p5.textAlign(p5.LEFT, p5.TOP);
       p5.textFont(bodyFont);
-      p5.textSize(18);
+      p5.textSize(22);
       p5.fill(textMuted);
       p5.text(
         "Noch keine Auswahl getroffen.",
@@ -1026,150 +1106,109 @@ class GameRenderer {
       );
     }
 
-    const rows = Math.max(1, Math.ceil((selectionEntries.length || 1) / gridColumns));
-    const totalY = gridStartY + rows * tileHeight + (rows - 1) * tileGap + 20;
-
-    p5.textAlign(p5.CENTER, p5.TOP);
-    p5.textFont(headingFont);
-    p5.textSize(24);
-    p5.fill(highlightColor);
-    p5.text(
-      `Gesamtkosten: ${state.spent}€`,
-      leftInnerX + gridWidth / 2,
-      totalY
-    );
-    p5.textAlign(p5.LEFT, p5.TOP);
-
-    // RIGHT: Checklist & robustness blocks
+    // RIGHT: Risk kinds and plan-B prompt
     const rightX = contentX + leftWidth + cardGap;
     p5.fill(cardBg);
     p5.rect(rightX, columnsTop, rightWidth, columnsHeight, cardRadius);
 
     const rightInnerX = rightX + cardPadding;
     const rightInnerWidth = rightWidth - cardPadding * 2;
-    let rightCursor = columnsTop + cardPadding;
 
-    p5.textAlign(p5.LEFT, p5.TOP);
+    p5.textAlign(p5.LEFT, p5.BASELINE);
     p5.textFont(headingFont);
+    p5.textStyle(p5.BOLD);
     p5.textSize(30);
     p5.fill(textPrimary);
-    p5.text("⚠️ Was könnte passieren?", rightInnerX, rightCursor);
-    rightCursor += 44;
+    p5.text("⚠️ Was könnte passieren?", rightInnerX, titleBaseline);
+    p5.textStyle(p5.NORMAL);
 
     const risks = [
-      "Schlechtes Wetter",
-      "Technische Probleme",
-      "Gesundheitliche Notfälle",
-      "Logistische Überraschungen"
+      "Wetter",
+      "Anreise & Zeitplan",
+      "Essen & Trinken",
+      "Nachbarn & Überraschungen"
     ];
 
+    // The list is spread over the space above the plan-B line
+    const planBSize = 28;
+    const planBY = contentBottom - planBSize;
+    const planBDividerY = planBY - 26;
+    const riskTexts = risks.map(risk => `• ${risk}`);
     p5.textFont(bodyFont);
-    p5.textSize(16);
-    p5.fill(textMuted);
-    p5.textLeading(28);
-    risks.forEach(risk => {
-      p5.text(`• ${risk}`, rightInnerX, rightCursor, rightInnerWidth);
-      rightCursor += 28;
+    const riskSize = this.fitTextSize(riskTexts, 24, 20, rightInnerWidth);
+    const riskTop = contentTop + 14;
+    const riskStep = Math.min(
+      (planBDividerY - 24 - riskTop - riskSize) / (risks.length - 1),
+      riskSize + 38
+    );
+
+    p5.textAlign(p5.LEFT, p5.TOP);
+    p5.fill(textSoft);
+    riskTexts.forEach((risk, index) => {
+      p5.text(risk, rightInnerX, riskTop + index * riskStep);
     });
 
-    rightCursor += 18;
-
-    const reflectionX = rightInnerX + 14;
-    p5.textFont(bodyFont);
-    p5.textSize(18);
-    p5.fill(textMuted);
-    p5.text("💭 Alles berücksichtigt?", reflectionX, rightCursor);
-    rightCursor += 40;
-
-    p5.stroke(255, 255, 255, 25);
+    p5.stroke(255, 255, 255, 30);
     p5.strokeWeight(1);
-    p5.line(rightInnerX, rightCursor, rightInnerX + rightInnerWidth, rightCursor);
+    p5.line(rightInnerX, planBDividerY, rightInnerX + rightInnerWidth, planBDividerY);
     p5.noStroke();
-    rightCursor += 24;
 
-    // Robustness radar as bar
     p5.textFont(headingFont);
-    p5.textSize(26);
+    p5.textStyle(p5.BOLD);
+    p5.textSize(planBSize);
     p5.fill(textPrimary);
-    p5.text("Robustheit", rightInnerX, rightCursor);
-    rightCursor += 40;
-
-    const barWidth = rightInnerWidth;
-    const barHeight = 18;
-    p5.noStroke();
-    p5.fill(255, 255, 255, 25);
-    p5.rect(rightInnerX, rightCursor, barWidth, barHeight, barHeight / 2);
-    p5.fill(robustnessColor);
-    p5.rect(
-      rightInnerX,
-      rightCursor,
-      barWidth * (robustnessScore / 10),
-      barHeight,
-      barHeight / 2
-    );
-
-    p5.textAlign(p5.RIGHT, p5.CENTER);
-    p5.textFont(headingFont);
-    p5.textSize(30);
-    p5.fill(textPrimary);
-    p5.text(
-      `${robustnessScore}/10`,
-      rightInnerX + barWidth,
-      rightCursor + barHeight / 2
-    );
-    p5.textAlign(p5.LEFT, p5.TOP);
-    rightCursor += barHeight + 28;
-
-    p5.textFont(bodyFont);
-    p5.textSize(15);
-    p5.fill(textMuted);
-    p5.textLeading(24);
-    p5.text(
-      "Je höher deine Robustheit, desto mehr unerwartete Ereignisse kann deine Planung verkraften.",
-      rightInnerX,
-      rightCursor,
-      rightInnerWidth
-    );
-    rightCursor += 70;
-
-    let assessment = "";
-    if (robustnessScore >= 8) {
-      assessment = "Sehr gut! Du bist auf fast alle Überraschungen vorbereitet.";
-    } else if (robustnessScore >= 6) {
-      assessment = "Solide Planung. Gegen viele Probleme geschützt, aber nicht gegen alle.";
-    } else if (robustnessScore >= 4) {
-      assessment = "Grundabsicherung vorhanden. Bei größeren Problemen könnte es schwierig werden.";
-    } else {
-      assessment = "Riskante Planung. Unerwartete Ereignisse können schnell zum Problem werden.";
-    }
-
-    p5.textFont(bodyFont);
-    p5.textSize(15);
-    p5.fill(robustnessColor);
-    p5.textLeading(24);
-    p5.text(
-      assessment,
-      rightInnerX,
-      rightCursor,
-      rightInnerWidth
-    );
+    p5.text("💭 Was ist dein Plan B?", rightInnerX, planBY);
+    p5.textStyle(p5.NORMAL);
 
     // Buttons anchored to box edges
     const backButton = this.buttonManager.getButton("backToPlanning");
     const continueButton = this.buttonManager.getButton("continueToEvent");
-    const buttonY = this.p5.height - UI_CONFIG.BUTTON.EVALUATE.HEIGHT - 48;
 
     if (backButton) {
       backButton.y = buttonY;
-      backButton.x = panelX + cardPadding;
+      backButton.x = panelX + buttonPadding;
     }
 
     if (continueButton) {
       continueButton.y = buttonY;
-      continueButton.x = panelX + panelWidth - continueButton.width - cardPadding;
+      continueButton.x = panelX + panelWidth - continueButton.width - buttonPadding;
     }
 
     p5.pop();
+  }
+
+  // Largest size at which the message wraps into at most two lines and no single word is left alone on the second one
+  fitMessageSize(message, maxWidth, startSize, minSize) {
+    const { p5 } = this;
+    for (let size = startSize; size > minSize; size--) {
+      p5.textSize(size);
+      const lines = [];
+      let line = "";
+      message.split(" ").forEach(word => {
+        const candidate = line ? `${line} ${word}` : word;
+        // p5 measures a trial line including the space after the word
+        if (line && p5.textWidth(`${candidate} `) > maxWidth) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = candidate;
+        }
+      });
+      lines.push(line);
+      if (lines.length === 1 || (lines.length === 2 && lines[1].includes(" "))) return size;
+    }
+    return minSize;
+  }
+
+  // Largest size from startSize down to minSize at which all texts fit maxWidth in the current font and style
+  fitTextSize(texts, startSize, minSize, maxWidth) {
+    const { p5 } = this;
+    let size = startSize;
+    p5.textSize(size);
+    while (size > minSize && texts.some(text => p5.textWidth(text) > maxWidth)) {
+      p5.textSize(--size);
+    }
+    return size;
   }
 
   getResultColor(state) {
@@ -1215,6 +1254,33 @@ class GameRenderer {
     // Value
     p5.fill(UI_CONFIG.COLORS.TEXT);
     p5.text(`${robustness}/10`, barX + barWidth + 10, robustnessY);
+  }
+
+  // Verdict on the share of events the plan survives (0..1), independent of the drawn event
+  getRobustnessVerdict(share) {
+    const { p5 } = this;
+    const VERY_ROBUST_SHARE = 0.85;
+    const SOLID_SHARE = 0.6;
+
+    if (share >= VERY_ROBUST_SHARE) {
+      return {
+        heading: "Sehr robust",
+        sentence: "Gut abgesichert - aber kein Plan ist perfekt. Irgendein Ereignis findet immer eine Schwachstelle.",
+        color: p5.color("#4CAF50") // Green
+      };
+    }
+    if (share >= SOLID_SHARE) {
+      return {
+        heading: "Solide",
+        sentence: "Gegen vieles gewappnet, aber nicht gegen alles. Wo war dein Plan B?",
+        color: p5.color("#FFC107") // Yellow
+      };
+    }
+    return {
+      heading: "Anfällig",
+      sentence: "Viele mögliche Ereignisse hätten deinen Plan zu Fall gebracht.",
+      color: p5.color("#FF5252") // Red
+    };
   }
 
   getRobustnessColor(value) {

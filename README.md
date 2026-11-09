@@ -1,34 +1,21 @@
-An interactive web-based demo that helps users plan their festival experience by making strategic choices about transportation, accommodation, and food. Watch your decisions affect your festival strategy's robustness score as you prepare for Rock am Ring!
-Developed for the KI-Erlebnistag 2024 in the scope of the week of AI (Woche der KI)
+An interactive web-based demo in which you plan a festival trip to Rock am Ring: how you travel, where you sleep and what you eat. Then a surprise event shows whether your plan holds up when something unexpected happens.
+
+This is the updated version for the KI-Erlebnistag 2026. The original version was developed for the KI-Erlebnistag 2024 in the scope of the Woche der KI (week of AI).
 
 Try the game here: https://tobiasschwartz.github.io/robust-planning-demo
 
-What you recognize in game:
+## How it plays
 
-You see after the Button "Ready to rock?":
+1. After "Ready to rock?" you see three categories: Transport, Unterkunft (accommodation) and Verpflegung (catering).
+2. Open a category and pick one option. Some combinations are not possible, for example a group tent on a train trip.
+3. Once all three categories are chosen, press "Planung auswerten" for a final check of your plan.
+4. A surprise event happens that you did not plan for.
+5. The verdict shows whether your plan survived and how robust it is overall.
 
-Three Buttons on the top: 1.Button"Transport" 2.Button"Unterkunft" 3."Verpflegung".
-Under the Buttons are interactive action, what you have planned for your festival.
+## Options
 
-By Button"Transport(Carriage)":
-- [x] Zug (train)
-- [x] Auto (car)
-- [x] Fahrgemeinschaft(carpooling)
-- [x] Camping-Bus
-- [x] Helicopter
+- Transport: Zug (train), Auto (car), Fahrgemeinschaft (carpooling), Camping-Bus (camper van), Helikopter (helicopter)
+- Unterkunft: Gruppenzelt (group tent), 2er-Zelte (two-person tents), Camping-Bus (camper van), Stadt-Hotel (city hotel)
+- Verpflegung: Campingkocher (camping stove), Food Trucks, Kocher & Trucks (stove plus food trucks), Nur Bier (beer only)
 
-By Button"Unterkunft"(Accommodation)
-- [x] Gruppenzelt(Group tent)
-- [x] 2er-Zelt(two tent)
-- [x] Camping Bus
-- [x] Stadt-Hotel(City Hotel)
-
-By Button"Verpflegung"(Catering services)
-- [x] Campingkocher(Camping cooking)
-- [x] Festival Food
-- [x] Hybrid/Mix
-- [x] Nur Bier(Only bier)
-
-Then you should press the appropriate action in the appropriate categories. Then press Continue and an unforeseen event will occur that you did not plan for.
-Then comes the scoring and the game is over.
-
+Prices are rough per-person estimates (without the festival ticket) and have no effect on the outcome.

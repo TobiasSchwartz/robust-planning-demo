@@ -8,7 +8,7 @@ const GAME_DATA = {
   },
   
   CATEGORY_DESCRIPTIONS: {
-    default: "🎸 Wähle aus den drei Kategorien: Transport, Unterkunft und Verpflegung.\nJede Entscheidung beeinflusst, wie robust dein Festival-Wochenende wird!",
+    default: "🎸 Ziel: Dein Wochenende soll auch dann klappen, wenn etwas Unerwartetes passiert!",
     transport: "🚗 Wie kommst du zum Festival? Von Zug bis Helikopter ist alles dabei!",
     accommodation: "⛺ Wo willst du schlafen? Vom Luxus-Hotel bis zum Minizelt.",
     food: "🍕 Der Festivalhunger kommt bestimmt! Gourmet oder Dosenbier?"
@@ -29,7 +29,7 @@ const GAME_DATA = {
         description: "Stündlich zum Festival-Bahnhof. Shuttle inklusive. Letzte Fahrt 23 Uhr! 🏃‍♂️",
         pro: ["Staufrei", "Wetterunabhängig", "Umweltfreundlich"],
         con: ["Fahrplan-gebunden", "Wenig Gepäck", "Kein Plan B"],
-        cost: 150
+        cost: 40
       },
       car: {
         name: "Auto",
@@ -38,7 +38,7 @@ const GAME_DATA = {
         description: "Dein eigenes Auto, deine Regeln. Drei Parkzonen verfügbar. Möge der Parkplatz mit dir sein! 🎯",
         pro: ["Flexibel", "Notfall-Schlafplatz", "Viel Stauraum"],
         con: ["Staugefahr", "Pannenrisiko", "Parkplatzstress"],
-        cost: 180
+        cost: 50
       },
       carpool: {
         name: "Fahrgemeinschaft",
@@ -47,16 +47,16 @@ const GAME_DATA = {
         description: "Über 100 Mitfahrgelegenheiten verfügbar. 70% positive Bewertungen - der Rest war... interessant! 😅",
         pro: ["Günstig", "Neue Freunde", "Umweltfreundlich"],
         con: ["Unzuverlässig", "Fremde Menschen", "Kein Einfluss"],
-        cost: 50
+        cost: 25
       },
       camper: {
         name: "Camping-Bus",
         icon: "🚐",
         robustness: 8,
         description: "Premium-Platz mit Stromanschluss. Anreise 10-20 Uhr. Dein mobiles Zuhause! ⚡",
-        pro: ["All-in-One", "Wetterfest", "Komfortabel"],
+        pro: ["All-in-One", "Regenfest", "Komfortabel"],
         con: ["Relativ teuer", "Zeitfenster", "Wenig Plätze"],
-        cost: 400
+        cost: 100
       },
       heli: {
         name: "Helikopter",
@@ -65,7 +65,7 @@ const GAME_DATA = {
         description: "VIP-Style! Landung direkt neben der Hauptbühne. Rock'n'Roll, Baby! 🎸",
         pro: ["Mega-Eindruck", "Keine Staus", "Pure Freiheit"],
         con: ["Absurd teuer", "Wetterabhängig", "Angeber-Image"],
-        cost: 800
+        cost: 2000
       },
       // taxi: {
       //   name: "Premium Taxi",
@@ -84,8 +84,8 @@ const GAME_DATA = {
         robustness: 4,
         description: "Festival-Palast mit 20m². Aufbauzeit: 25 Min zu viert oder 2h mit Chaos! 👑",
         pro: ["Gesellig", "Viel Platz", "Zentral"],
-        con: ["Sturmgefährdet", "Aufwändig", "Teamarbeit nötig"],
-        cost: 150
+        con: ["Langer Aufbau", "Sturmgefährdet", "Teamarbeit nötig"],
+        cost: 40
       },
       smallTents: {
         name: "2er-Zelte",
@@ -93,17 +93,18 @@ const GAME_DATA = {
         robustness: 8,
         description: "Klein, schnell, effektiv. 2 Min Aufbauzeit. Überall zu finden wie Mücken! 🦟",
         pro: ["Schnell", "Flexibel", "Ersetzbar"],
-        con: ["Eng", "Getrennt", "Mehr Gewicht"],
-        cost: 120
+        con: ["Nicht regendicht", "Hellhörig", "Eng"],
+        cost: 30
       },
       camperAcc: {
         name: "Camping-Bus",
         icon: "🚐",
         robustness: 6,
         description: "Erfordert die Anreise mit dem Camping-Bus. Deine Festival-Festung mit Strom! Luxus auf Rädern. 🏰",
-        pro: ["Wetterfest", "Komfort", "Strom"],
-        con: ["Teuer", "Standortfixiert", "Begrenzt"],
-        cost: 0
+        pro: ["Regenfest", "Komfort", "Strom"],
+        con: ["Teuer", "Heizt sich auf", "Standortfixiert"],
+        cost: 0,
+        costLabel: "inklusive"
       },
       hotel: {
         name: "Stadt-Hotel",
@@ -112,7 +113,7 @@ const GAME_DATA = {
         description: "15km vom Festival. Täglich Shuttle. Echte Betten und Dusche! 🚿",
         pro: ["Luxus pur", "Echte Dusche", "Ruhe"],
         con: ["Pendeln nötig", "Teuer", "Festival-Flair fehlt"],
-        cost: 400
+        cost: 100
       }
     },
     food: {
@@ -123,25 +124,25 @@ const GAME_DATA = {
         description: "DIY-Küche mit Gaskocher. 5 Supermärkte in 3km. Gordon Ramsay Mode! 👨‍🍳",
         pro: ["Günstig", "Flexibel", "Unabhängig"],
         con: ["Aufwändig", "Wetterabhängig", "Equipment nötig"],
-        cost: 120
+        cost: 35
       },
       festivalFood: {
-        name: "Festival-Food",
+        name: "Food Trucks",
         icon: "🍕",
         robustness: 8,
         description: "40 Food-Trucks, 24/7 geöffnet. Kein Kochen, nur Schlemmen! 🍔",
         pro: ["Vielfältig", "Bequem", "Immer offen"],
-        con: ["Teuer", "Warteschlangen", "Schwankende Qualität"],
-        cost: 250
+        con: ["Von Trucks abhängig", "Teuer", "Warteschlangen"],
+        cost: 75
       },
       hybrid: {
-        name: "Hybrid/Mix",
+        name: "Kocher & Trucks",
         icon: "🍳",
         robustness: 9,
         description: "Kleiner Kocher plus Food-Trucks. Das Beste aus beiden Welten! 🃏",
         pro: ["Flexibel", "Plan B", "Kosteneffizient"],
         con: ["Komplex", "Mehr Planung", "Viel Equipment"],
-        cost: 200
+        cost: 55
       },
       beerOnly: {
         name: "Nur Bier",
@@ -150,7 +151,7 @@ const GAME_DATA = {
         description: "Flüssige Nahrung! Wer braucht schon feste Nahrung? YOLO! 🤪",
         pro: ["Billig", "Party pur", "Keine Küche nötig"],
         con: ["Ungesund", "Konstanter Harndrang", "Filmriss"],
-        cost: 80
+        cost: 30
       }
     }
   },
@@ -217,7 +218,7 @@ const GAME_DATA = {
           "food.cooking",
           "food.hybrid"
         ],
-        reason: "Im Helikopter ist der Platz für Gepäck sehr begrenzt - und Gasflaschen sind verboten!"
+        reason: "Im Helikopter ist kaum Platz für Gepäck - und Gasflaschen sind verboten!"
       },
       "transport.camper": {
         disables: [
@@ -225,7 +226,7 @@ const GAME_DATA = {
           "accommodation.smallTents",
           "accommodation.groupTent"
         ],
-        reason: "Wer mit dem Camping-Bus anreist, schläft auch darin!"
+        reason: "Camping-Bus heißt: Du schläfst auch darin - kein Zelt, kein Hotel!"
       },
       "accommodation.groupTent": {
         disables: [

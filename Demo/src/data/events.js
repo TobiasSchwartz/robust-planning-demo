@@ -142,6 +142,44 @@ const EVENT_SYSTEM = {
       }
     },
 
+    // Timing Events
+    {
+      id: "lateArrival",
+      name: "Späte Ankunft! 🌙",
+      description: "Alles dauert länger als geplant - ihr erreicht das Festivalgelände erst mitten in der Nacht!",
+      criticalFailures: {
+        transport: {
+          camper: {
+            fails: true,
+            message: "Das Zeitfenster für den Camping-Bus-Stellplatz ist längst geschlossen - ihr müsst draußen bleiben! 🚪"
+          }
+        },
+        accommodation: {
+          groupTent: {
+            fails: true,
+            message: "Das Gruppenzelt im Dunkeln aufbauen? Nach zwei Stunden Chaos gebt ihr auf und schlaft unter freiem Himmel! 🔦"
+          }
+        }
+      },
+      survivedOutcomes: {
+        great: {
+          conditions: {
+            accommodation: ["smallTents"]
+          },
+          message: "Die 2er-Zelte stehen in zwei Minuten - während andere noch im Dunkeln tappen, liegst du schon im Schlafsack! 🏕️"
+        },
+        good: {
+          conditions: {
+            accommodation: ["hotel"]
+          },
+          message: "Dein Hotelzimmer wartet auch um Mitternacht auf dich - kurz duschen und ab ins Bett! 🛏️"
+        },
+        rough: {
+          message: "Mit Stirnlampe und guter Laune kommt ihr doch noch an - die erste Nacht wird kurz! 🌙"
+        }
+      }
+    },
+
     // Social Events
     {
       id: "neighborParty",
@@ -158,6 +196,7 @@ const EVENT_SYSTEM = {
         },
         food: {
           beerOnly: {
+            fails: true,
             message: "Die Kombination aus Schlafmangel und ausschließlich Bier lässt dich das komplette Hauptprogramm verschlafen! 💤"
           }
         }
@@ -185,12 +224,14 @@ const EVENT_SYSTEM = {
     // Food Events
     {
       id: "foodTruckStrike",
-      name: "Food-Truck Stop! 🍔",
+      name: "Food-Truck-Stopp! 🍔",
       description: "Breaking News: Eine defekte Wasserleitung legt vorübergehend alle Food-Trucks lahm!",
       criticalFailures: {
         food: {
           festivalFood: {
-            fails: true,
+            failsUnless: {
+              accommodation: ["hotel"]
+            },
             message: "Ups! Dein Plan, dich nur von Food-Trucks zu ernähren, geht nach hinten los. Mit knurrendem Magen ist das Festival leider vorbei! 😅"
           }
         }
@@ -219,7 +260,7 @@ const EVENT_SYSTEM = {
           }
         ],
         rough: {
-          message: "Trocken Brot und Käse aus dem Supermarkt... Naja, Hauptsache satt! 🧀"
+          message: "Trockenes Brot und Käse aus dem Supermarkt... Naja, Hauptsache satt! 🧀"
         }
       }
     },
@@ -229,6 +270,7 @@ const EVENT_SYSTEM = {
       id: "surpriseGig",
       name: "Überraschungs-Konzert! 🎸",
       description: "Deine Lieblingsband kündigt spontan einen Überraschungs-Gig an!",
+      failHeadline: "Konzert verpasst",
       criticalFailures: {
         accommodation: {
           hotel: {
@@ -252,8 +294,9 @@ const EVENT_SYSTEM = {
 
     {
       id: "vipParty",
-      name: "VIP Einladung! 🎭",
+      name: "VIP-Einladung! 🎭",
       description: "Du gewinnst Zugang zur exklusiven Backstage-Party!",
+      failHeadline: "Peinlicher Auftritt",
       criticalFailures: {
         food: {
           beerOnly: {
@@ -337,7 +380,7 @@ const EVENT_SYSTEM = {
 
     // 2. Check survival quality
     // Helper function to check if conditions match
-    const checkConditions = (conditions) => {
+    const checkConditions = (conditions = {}) => {
       return Object.entries(conditions).every(
         ([category, validChoices]) => validChoices.includes(selections[category])
       );

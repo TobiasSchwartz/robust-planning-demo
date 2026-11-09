@@ -4,6 +4,8 @@ const UI_CONFIG = {
       HEIGHT: 800,
       PADDING: 20,
     },
+    // Reload the game after this long without input (not on the intro screen)
+    IDLE_RESET_MS: 90000,
     LAYOUT: {
       // Two-panel layout with prominent center
       INFO_PANEL: {
@@ -39,20 +41,32 @@ const UI_CONFIG = {
         HEIGHT: 60
       }
     },
+    // p5 quotes a font name that contains whitespace, so a stack must not contain any
+    FONTS: {
+      HEADING: "Arial,Helvetica,sans-serif",
+      BODY: "Helvetica,Arial,sans-serif"
+    },
     COLORS: {
       BACKGROUND: "#1a1a2e",
       PANEL_BG: "#162447",
       BUTTON: {
         DEFAULT: "#314872",
-        SELECTED: "#999",
+        SELECTED: "#5f6f91",
         DISABLED: "#162447",
-        HOVER: "#b1dbe7"
+        HOVER: "#46659f",
+        ACTIVE: "#263d6b",
+        // The one forward action per screen, same as COLORS.HIGHLIGHT
+        PRIMARY: "#e43f5a",
+        PRIMARY_HOVER: "#c72f4b",
+        PRIMARY_ACTIVE: "#b52a44"
       },
       TEXT: "#ffffff",
       TEXT_SECONDARY: "#a0a0c0",  // For less important text
+      TEXT_CAPTION: "#c9d0e8",    // Small text on button fills
       LINE: "#314872",
       HIGHLIGHT: "#e43f5a",
-      ERROR: "#FF5252"
+      ERROR: "#FF5252",
+      CON: "#ff8a8a"              // Soft red for the downsides of an option
     }
   };
   
