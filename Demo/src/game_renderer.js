@@ -23,13 +23,16 @@ class GameRenderer {
     startBtn.className = 'start-button';
     startBtn.textContent = GAME_DATA.INTRO.button_text;
 
-    // Handle both mouse and touch events for better compatibility
-    const startHandler = () => this.startGame();
-    startBtn.onclick = startHandler;
-    startBtn.ontouchend = (e) => {
-      e.preventDefault(); // Prevent ghost click
-      startHandler();
+    // Listen to pointer, touch and mouse: whichever fires first starts the game,
+    // startGame() ignores the rest. pointerup covers touchscreens and pens even when
+    // the browser does not deliver touch events or suppresses the compatibility click.
+    const startHandler = (e) => {
+      if (e && e.cancelable) e.preventDefault(); // Prevent ghost click
+      this.startGame();
     };
+    startBtn.addEventListener('pointerup', startHandler);
+    startBtn.addEventListener('touchend', startHandler);
+    startBtn.addEventListener('click', startHandler);
 
     document.body.appendChild(startBtn);
     this.startBtn = startBtn;
@@ -50,13 +53,17 @@ class GameRenderer {
   }
 
   startGame() {
+    // Several input events may arrive for one tap, start only once
+    if (this.gameStarted) return;
+    this.gameStarted = true;
     this.showIntro = false;
-    this.gameEngine.dispatch("START_GAME");
-    
-    // Remove intro elements
+
+    // Remove intro elements first, so an error further down cannot leave a dead start button
     this.startBtn.remove();
     this.titleDiv.remove();
     this.subtitleDiv.remove();
+
+    this.gameEngine.dispatch("START_GAME");
     // Create game buttons
     this.createInitialButtons();
   }
