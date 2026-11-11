@@ -228,19 +228,34 @@ const GAME_DATA = {
         ],
         reason: "Camping-Bus heißt: Du schläfst auch darin - kein Zelt, kein Hotel!"
       },
+      // Forward restrictions are shown before reverse ones, so each selected
+      // option should list everything it blocks: then its panel shows one
+      // reason instead of the reasons of every option it blocks in reverse.
+      "accommodation.camperAcc": {
+        disables: [
+          "transport.train",
+          "transport.carpool",
+          "transport.car",
+          "transport.heli"
+        ],
+        reason: "Wer im Camping-Bus schläft, reist auch mit ihm an!"
+      },
       "accommodation.groupTent": {
         disables: [
           "transport.heli",
           "transport.train",
-          "transport.carpool"
+          "transport.carpool",
+          "transport.camper"
         ],
-        reason: "Das Gruppenzelt braucht viel Platz - du brauchst einen eigenen Wagen!"
+        reason: "Das Gruppenzelt braucht viel Platz - dafür brauchst du ein normales Auto!"
       },
       "food.cooking": {
         disables: [
           "accommodation.hotel",
+          "transport.carpool",
+          "transport.heli"
         ],
-        reason: "Im Hotel kannst du nicht selbst kochen!"
+        reason: "Selbst kochen braucht Kocher, Gas & Vorräte - kein Hotel, kein Heli, keine Fahrgemeinschaft!"
       },
     }
   }
